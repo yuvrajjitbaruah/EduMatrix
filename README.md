@@ -8,7 +8,7 @@
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![Live](https://img.shields.io/badge/Live-edumatrix.tech-00C896?style=for-the-badge&logo=globe&logoColor=white)](https://edumatrix.tech)
-[![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue?style=for-the-badge)](LICENSE)
 
 **A production-ready, AI-powered education management platform for students, teachers, and institutions.**
 
@@ -316,7 +316,7 @@ python manage.py test academics dashboard accounts attendance quizzes --verbosit
 
 ## 📄 License
 
-Licensed under the MIT License — see [LICENSE](LICENSE) for details.
+Licensed under the Apache 2.0 License — see [LICENSE](LICENSE) for details.
 
 ---
 
