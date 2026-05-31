@@ -1,0 +1,57 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}{% if view_type == 'sent' %}Sent Messages{% else %}Inbox{% endif %}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between" style="flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1 class="page-title">{% if view_type == 'sent' %}Sent Messages{% else %}Inbox{% endif %} ✉️</h1>
+            <p class="page-subtitle">{% if view_type == 'inbox' %}{{ unread_count }} unread message{{ unread_count|pluralize }}{% else %}Messages you've sent{% endif %}</p>
+        </div>
+        <a href="{% url 'compose_message' %}" class="btn btn-primary">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Compose
+        </a>
+    </div>
+
+    <!-- Tabs -->
+    <div class="pill-list">
+        <a href="{% url 'inbox' %}" class="pill-item {% if view_type == 'inbox' %}active{% endif %}">Inbox</a>
+        <a href="{% url 'sent_messages' %}" class="pill-item {% if view_type == 'sent' %}active{% endif %}">Sent</a>
+    </div>
+
+    <div class="space-y-3">
+        {% for msg in messages_list %}
+        <a href="{% url 'message_detail' msg.id %}" class="card fade-in" style="display: block; text-decoration: none; color: inherit; {% if view_type == 'inbox' and not msg.is_read %}border-left: 3px solid var(--indigo-500);{% endif %}">
+            <div class="flex items-center gap-4">
+                <div class="sidebar-user-avatar" style="width: 2.5rem; height: 2.5rem; font-size: 0.75rem; flex-shrink: 0;">
+                    {% if view_type == 'sent' %}
+                    {{ msg.receiver.first_name|make_list|first|default:"U" }}{{ msg.receiver.last_name|make_list|first|default:"" }}
+                    {% else %}
+                    {{ msg.sender.first_name|make_list|first|default:"U" }}{{ msg.sender.last_name|make_list|first|default:"" }}
+                    {% endif %}
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <div class="flex items-center justify-between">
+                        <span style="font-weight: {% if view_type == 'inbox' and not msg.is_read %}800{% else %}600{% endif %}; font-size: 0.9375rem;">
+                            {% if view_type == 'sent' %}To: {{ msg.receiver.get_full_name|default:msg.receiver.username }}{% else %}{{ msg.sender.get_full_name|default:msg.sender.username }}{% endif %}
+                        </span>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">{{ msg.sent_at|timesince }} ago</span>
+                    </div>
+                    <div style="font-weight: {% if view_type == 'inbox' and not msg.is_read %}700{% else %}500{% endif %}; font-size: 0.875rem; margin-top: 0.125rem;">{{ msg.subject }}</div>
+                    <p style="font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.25rem;">{{ msg.body|truncatewords:15 }}</p>
+                </div>
+                {% if view_type == 'inbox' and not msg.is_read %}
+                <div style="width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--indigo-500); flex-shrink: 0;"></div>
+                {% endif %}
+            </div>
+        </a>
+        {% empty %}
+        <div class="card" style="text-align: center; padding: 3rem;">
+            <p style="font-size: 2rem; margin-bottom: 0.5rem;">✉️</p>
+            <p style="color: var(--text-muted);">No messages{% if view_type == 'sent' %} sent{% endif %} yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

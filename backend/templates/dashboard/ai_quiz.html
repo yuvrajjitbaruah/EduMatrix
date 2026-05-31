@@ -1,0 +1,186 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}AI Quiz Generator{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div>
+        <h1 class="page-title">AI Quiz Generator 🧠</h1>
+        <p class="page-subtitle">Generate classroom-ready quizzes on any topic instantly.</p>
+    </div>
+
+    <!-- Generator Form -->
+    <div class="card fade-in">
+        <h3 style="font-size: 1.125rem; font-weight: 800; margin-bottom: 1rem;">Configure Your Quiz</h3>
+        <form id="quizForm" onsubmit="generateQuiz(event)" class="grid-3" style="gap: 1.25rem; align-items: end;">
+            <div class="form-group" style="grid-column: span 2;">
+                <label class="form-label">Topic / Subject</label>
+                <input type="text" id="quizTopic" class="form-input" placeholder="e.g. World War II, Photosynthesis, Python Loops..." required>
+            </div>
+            <div style="display: flex; gap: 0.75rem;">
+                <div class="form-group" style="flex: 1;">
+                    <label class="form-label">Questions</label>
+                    <select id="quizNum" class="form-input">
+                        <option value="3">3</option>
+                        <option value="5" selected>5</option>
+                        <option value="7">7</option>
+                        <option value="10">10</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label class="form-label">Difficulty</label>
+                    <select id="quizDiff" class="form-input">
+                        <option value="easy">Easy</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+            </div>
+            <div style="grid-column: 1 / -1;">
+                <button type="submit" id="generateBtn" class="btn btn-primary">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    Generate Quiz
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Loading -->
+    <div id="quizLoading" style="display: none;">
+        <div class="card" style="text-align: center; padding: 3rem;">
+            <div class="typing-indicator" style="justify-content: center; margin-bottom: 1rem;">
+                <span style="width: 10px; height: 10px; background: var(--indigo-500);"></span>
+                <span style="width: 10px; height: 10px; background: var(--purple-500);"></span>
+                <span style="width: 10px; height: 10px; background: var(--cyan-500);"></span>
+            </div>
+            <p style="color: var(--text-muted); font-weight: 600;">Generating quiz with AI...</p>
+        </div>
+    </div>
+
+    <!-- Quiz Container -->
+    <div id="quizContainer" style="display: none;">
+        <div class="flex items-center justify-between" style="margin-bottom: 1rem;">
+            <h3 style="font-size: 1.125rem; font-weight: 800;">📝 Your Quiz</h3>
+            <div id="quizScore" style="display: none;" class="streak-badge"></div>
+        </div>
+        <div id="quizQuestions" class="space-y-4"></div>
+        <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+            <button onclick="checkAnswers()" id="checkBtn" class="btn btn-primary">✓ Check Answers</button>
+            <button onclick="document.getElementById('quizContainer').style.display='none'; document.getElementById('quizForm').reset();" class="btn btn-secondary">↻ New Quiz</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.quiz-option { display: block; width: 100%; text-align: left; padding: 0.75rem 1rem; margin-bottom: 0.5rem; border-radius: 0.75rem; border: 1.5px solid var(--border-subtle); background: rgba(148,163,184,0.04); color: var(--text-primary); font-size: 0.875rem; font-family: var(--font-main); cursor: pointer; transition: all 0.2s; font-weight: 500; }
+.quiz-option:hover { border-color: var(--indigo-500); background: rgba(99,102,241,0.06); }
+.quiz-option.selected { border-color: var(--indigo-500); background: rgba(99,102,241,0.12); font-weight: 700; }
+.quiz-option.correct { border-color: var(--emerald-500) !important; background: rgba(16,185,129,0.12) !important; color: var(--emerald-500) !important; }
+.quiz-option.wrong { border-color: var(--rose-500) !important; background: rgba(244,63,94,0.08) !important; }
+.quiz-explanation { display: none; padding: 0.75rem 1rem; margin-top: 0.5rem; border-radius: 0.75rem; background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.15); font-size: 0.8125rem; color: var(--text-secondary); }
+.quiz-explanation.show { display: block; }
+.typing-indicator { display: flex; gap: 6px; }
+.typing-indicator span { border-radius: 50%; animation: bounce 1.4s infinite both; }
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+</style>
+
+<script>
+const csrfToken = '{{ csrf_token }}';
+let quizData = [];
+
+async function generateQuiz(e) {
+    e.preventDefault();
+    const topic = document.getElementById('quizTopic').value;
+    const num = document.getElementById('quizNum').value;
+    const diff = document.getElementById('quizDiff').value;
+
+    document.getElementById('quizLoading').style.display = 'block';
+    document.getElementById('quizContainer').style.display = 'none';
+    document.getElementById('generateBtn').disabled = true;
+
+    try {
+        const formData = new FormData();
+        formData.append('topic', topic);
+        formData.append('num_questions', num);
+        formData.append('difficulty', diff);
+
+        const res = await fetch('{% url "ai_quiz_generate" %}', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken },
+            body: formData,
+        });
+        const data = await res.json();
+
+        document.getElementById('quizLoading').style.display = 'none';
+
+        if (data.success && data.questions) {
+            quizData = data.questions;
+            renderQuiz(data.questions);
+        } else {
+            alert(data.error || 'Failed to generate quiz. Please try again.');
+        }
+    } catch (err) {
+        document.getElementById('quizLoading').style.display = 'none';
+        alert('Network error. Please try again.');
+    }
+    document.getElementById('generateBtn').disabled = false;
+}
+
+function renderQuiz(questions) {
+    const container = document.getElementById('quizQuestions');
+    container.innerHTML = '';
+    document.getElementById('quizScore').style.display = 'none';
+
+    questions.forEach((q, qi) => {
+        const div = document.createElement('div');
+        div.className = 'card fade-in';
+        div.style.animationDelay = (qi * 0.1) + 's';
+
+        let optionsHtml = '';
+        q.options.forEach((opt, oi) => {
+            optionsHtml += `<button type="button" class="quiz-option" data-q="${qi}" data-o="${oi}" onclick="selectOption(${qi}, ${oi})">${String.fromCharCode(65+oi)}. ${opt}</button>`;
+        });
+
+        div.innerHTML = `
+            <div style="font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--indigo-500); margin-bottom: 0.5rem;">Question ${qi+1} of ${questions.length}</div>
+            <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 1rem; line-height: 1.5;">${q.question}</h4>
+            <div>${optionsHtml}</div>
+            <div class="quiz-explanation" id="exp-${qi}">💡 ${q.explanation || ''}</div>
+        `;
+        container.appendChild(div);
+    });
+
+    document.getElementById('quizContainer').style.display = 'block';
+    document.getElementById('checkBtn').style.display = 'inline-flex';
+}
+
+function selectOption(qi, oi) {
+    document.querySelectorAll(`[data-q="${qi}"]`).forEach(b => b.classList.remove('selected'));
+    document.querySelector(`[data-q="${qi}"][data-o="${oi}"]`).classList.add('selected');
+}
+
+function checkAnswers() {
+    let score = 0;
+    quizData.forEach((q, qi) => {
+        const selected = document.querySelector(`[data-q="${qi}"].selected`);
+        const correct = q.correct;
+        
+        document.querySelectorAll(`[data-q="${qi}"]`).forEach(b => {
+            b.disabled = true;
+            const oi = parseInt(b.dataset.o);
+            if (oi === correct) b.classList.add('correct');
+            if (b.classList.contains('selected') && oi !== correct) b.classList.add('wrong');
+        });
+
+        if (selected && parseInt(selected.dataset.o) === correct) score++;
+        document.getElementById(`exp-${qi}`).classList.add('show');
+    });
+
+    const scoreEl = document.getElementById('quizScore');
+    scoreEl.textContent = `🏆 ${score}/${quizData.length} Correct`;
+    scoreEl.style.display = 'inline-flex';
+    document.getElementById('checkBtn').style.display = 'none';
+}
+</script>
+{% endblock %}

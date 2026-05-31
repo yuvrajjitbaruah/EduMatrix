@@ -1,0 +1,198 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Academic Planner{% endblock %}
+
+{% block content %}
+<div class="space-y-6 planner-page">
+    <section class="dashboard-hero planner-hero">
+        <div>
+            <span class="section-kicker">Academic Planner</span>
+            <h1 class="page-title">Daily Planner</h1>
+            <p class="page-subtitle">One place for schedule blocks, classwork, exams, messages, materials, and your personal action list.</p>
+        </div>
+        <div class="planner-date-controls">
+            <a href="{% url 'planner' %}?date={{ previous_date|date:'Y-m-d' }}" class="btn btn-secondary">Previous</a>
+            <form method="get" class="planner-date-form">
+                <input type="date" name="date" class="form-input" value="{{ selected_date|date:'Y-m-d' }}">
+                <button type="submit" class="btn btn-primary">Go</button>
+            </form>
+            <a href="{% url 'planner' %}?date={{ today|date:'Y-m-d' }}" class="btn btn-secondary">Today</a>
+            <a href="{% url 'planner' %}?date={{ next_date|date:'Y-m-d' }}" class="btn btn-secondary">Next</a>
+        </div>
+    </section>
+
+    <section class="planner-brief card">
+        <div>
+            <span class="planner-date-label">{{ selected_date|date:"l, d M Y" }}</span>
+            <h2>{{ next_action }}</h2>
+            <p>{{ class_count }} visible classrooms are connected to this planner.</p>
+        </div>
+        <a href="{% url 'smart_command_center' %}" class="btn btn-primary">Open Power Center</a>
+    </section>
+
+    <section class="stats-grid planner-stat-grid">
+        {% for stat in planner_stats %}
+        <article class="card stat-card planner-stat-card">
+            <span class="stat-card-label">{{ stat.label }}</span>
+            <div class="stat-card-value">{{ stat.value }}</div>
+            <div class="stat-card-change text-muted">{{ stat.detail }}</div>
+        </article>
+        {% endfor %}
+    </section>
+
+    <section class="dashboard-duo planner-grid">
+        <div class="card chart-container planner-panel">
+            <div class="chart-header">
+                <div>
+                    <h3 class="chart-title">Schedule</h3>
+                    <p class="chart-subtitle">Class blocks for the selected day.</p>
+                </div>
+                <a href="{% url 'timetable' %}" class="btn btn-secondary btn-sm">Open Timetable</a>
+            </div>
+            <div class="planner-schedule-list">
+                {% for schedule in schedules %}
+                <a href="{% url 'classroom_detail' schedule.course_class.id %}" class="planner-schedule-item">
+                    <span>{{ schedule.start_time|time:"H:i" }}<small>{{ schedule.end_time|time:"H:i" }}</small></span>
+                    <div>
+                        <strong>{{ schedule.course_class.name }}</strong>
+                        <p>{{ schedule.course_class.subject }} in {{ schedule.room_number }}</p>
+                    </div>
+                </a>
+                {% empty %}
+                <p class="text-muted">No scheduled classes for this day.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="card chart-container planner-panel">
+            <div class="chart-header">
+                <div>
+                    <h3 class="chart-title">Due Today</h3>
+                    <p class="chart-subtitle">Classwork, exams, and events connected to your role.</p>
+                </div>
+            </div>
+            <div class="planner-due-list">
+                {% for item in due_items %}
+                <div class="planner-due-item">
+                    <a href="{{ item.href }}">
+                        <span>{{ item.type }}</span>
+                        <strong>{{ item.title }}</strong>
+                        <p>{{ item.detail }}</p>
+                    </a>
+                    <div class="planner-due-actions">
+                        <span class="metric-pill">{{ item.time }}</span>
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="planner_date" value="{{ selected_date|date:'Y-m-d' }}">
+                            <input type="hidden" name="action" value="capture">
+                            <input type="hidden" name="title" value="{{ item.capture_title }}">
+                            <input type="hidden" name="description" value="{{ item.detail }}">
+                            <input type="hidden" name="due_date" value="{{ selected_date|date:'Y-m-d' }}">
+                            <button type="submit" class="btn btn-secondary btn-sm">Add Task</button>
+                        </form>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted">Nothing due on this date.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="dashboard-duo planner-grid">
+        <div class="card chart-container planner-panel">
+            <div class="chart-header">
+                <div>
+                    <h3 class="chart-title">Focus Tasks</h3>
+                    <p class="chart-subtitle">{{ pending_count }} open tasks, {{ overdue_count }} overdue.</p>
+                </div>
+                <a href="{% url 'todos' %}" class="btn btn-secondary btn-sm">Full Todo List</a>
+            </div>
+
+            <form method="post" class="planner-task-form">
+                {% csrf_token %}
+                <input type="hidden" name="planner_date" value="{{ selected_date|date:'Y-m-d' }}">
+                <input type="hidden" name="action" value="add">
+                <input type="text" name="title" class="form-input" placeholder="Add a task for this day" required>
+                <select name="priority" class="form-input">
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="low">Low</option>
+                </select>
+                <input type="date" name="due_date" class="form-input" value="{{ selected_date|date:'Y-m-d' }}">
+                <button type="submit" class="btn btn-primary">Add</button>
+            </form>
+
+            <div class="planner-task-list">
+                {% for todo in focus_tasks %}
+                <div class="planner-task-item priority-{{ todo.priority }}{% if todo.is_done %} done{% endif %}">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="planner_date" value="{{ selected_date|date:'Y-m-d' }}">
+                        <input type="hidden" name="action" value="toggle">
+                        <input type="hidden" name="todo_id" value="{{ todo.id }}">
+                        <button type="submit" aria-label="Toggle task"></button>
+                    </form>
+                    <div>
+                        <strong>{{ todo.title }}</strong>
+                        <p>{{ todo.get_priority_display }}{% if todo.due_date %} - Due {{ todo.due_date|date:"d M" }}{% endif %}</p>
+                    </div>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="planner_date" value="{{ selected_date|date:'Y-m-d' }}">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="todo_id" value="{{ todo.id }}">
+                        <button type="submit" class="planner-delete-btn" aria-label="Delete task">Delete</button>
+                    </form>
+                </div>
+                {% empty %}
+                <p class="text-muted">No open focus tasks for this date.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="card chart-container planner-panel">
+            <div class="chart-header">
+                <div>
+                    <h3 class="chart-title">Briefing</h3>
+                    <p class="chart-subtitle">Messages and study material you may need today.</p>
+                </div>
+            </div>
+            <div class="planner-briefing-grid">
+                <div>
+                    <h4>Unread Messages</h4>
+                    <div class="list-stack">
+                        {% for message in unread_messages %}
+                        <a href="{% url 'message_detail' message.id %}" class="list-row list-row-link">
+                            <div>
+                                <strong>{{ message.subject }}</strong>
+                                <p>From {{ message.sender.get_full_name|default:message.sender.username }}</p>
+                            </div>
+                            <span class="metric-pill">{{ message.sent_at|date:"d M" }}</span>
+                        </a>
+                        {% empty %}
+                        <p class="text-muted">No unread messages.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div>
+                    <h4>Recent Materials</h4>
+                    <div class="list-stack">
+                        {% for material in recent_materials %}
+                        <a href="{% url 'classroom_detail' material.course_class.id %}" class="list-row list-row-link">
+                            <div>
+                                <strong>{{ material.title }}</strong>
+                                <p>{{ material.course_class.subject }}</p>
+                            </div>
+                            <span class="metric-pill">{{ material.upload_date|date:"d M" }}</span>
+                        </a>
+                        {% empty %}
+                        <p class="text-muted">No recent study materials.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

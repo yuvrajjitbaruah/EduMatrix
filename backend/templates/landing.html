@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}EduMatrix{% endblock %}
+
+{% block body %}
+<main class="public-landing launch-home">
+    <nav class="landing-nav launch-nav" aria-label="EduMatrix public navigation">
+        <a class="landing-brand" href="{% url 'home' %}" aria-label="EduMatrix home">
+            <img src="{% static 'img/edumatrix-logo-transparent.png' %}" alt="EduMatrix" class="brand-logo-img">
+        </a>
+        <div class="landing-nav-links">
+            <a href="#platform">Platform</a>
+            <a href="#roles">Roles</a>
+            <a href="#security">Security</a>
+            <a href="#modules">Modules</a>
+            <a href="{% url 'about' %}">About</a>
+            <a href="{% url 'contact' %}">Contact</a>
+        </div>
+        <div class="landing-nav-actions">
+            {% if user.is_authenticated %}
+                <a class="btn btn-secondary" href="{% url 'dashboard_home' %}">Dashboard</a>
+            {% else %}
+                <a class="btn btn-secondary" href="{% url 'login' %}">Sign In</a>
+                <a class="btn btn-primary" href="#connect">Request Access</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <section class="landing-hero launch-hero">
+        <div class="landing-copy launch-copy">
+            <p class="landing-kicker">Premium education operating system</p>
+            <h1><span class="brand-word">EduMatrix</span></h1>
+            <p class="landing-lede">
+                A production-ready student management platform for schools, colleges, universities, teachers, students, and institution teams. EduMatrix combines classroom workflows, institutional operations, secure authentication, AI tools, reports, and installable web app access in one polished system.
+            </p>
+            <div class="landing-proof-strip launch-proof-strip" aria-label="EduMatrix launch highlights">
+                <span>Secure Data Layer</span>
+                <span>Branded Emails</span>
+                <span>Installable Access</span>
+                <span>Role-Based Portals</span>
+            </div>
+            <div class="landing-actions">
+                <a class="btn btn-primary btn-lg" href="#connect">Bring EduMatrix to your institution</a>
+                <a class="btn btn-secondary btn-lg" href="{% url 'signup_teacher' %}">Teacher Sign Up</a>
+                <a class="btn btn-secondary btn-lg" href="{% url 'signup_student' %}">Student Sign Up</a>
+            </div>
+            <div class="launch-metrics" aria-label="EduMatrix platform coverage">
+                <div><strong>30+</strong><span>institution modules</span></div>
+                <div><strong>3</strong><span>core role experiences</span></div>
+                <div><strong>24/7</strong><span>installable web access</span></div>
+            </div>
+        </div>
+
+        <div class="landing-product launch-product" aria-label="EduMatrix product preview">
+            <div class="landing-window glass-strong launch-window">
+                <div class="landing-window-bar">
+                    <span></span><span></span><span></span>
+                </div>
+                <div class="launch-browser-topline">
+                    <span>edumatrix.tech</span>
+                    <b>Live institution console</b>
+                </div>
+                <div class="landing-dashboard-grid launch-dashboard-grid">
+                    <div class="landing-stat">
+                        <strong>96%</strong>
+                        <span>attendance visibility</span>
+                    </div>
+                    <div class="landing-stat">
+                        <strong>42</strong>
+                        <span>active classrooms</span>
+                    </div>
+                    <div class="landing-panel landing-panel-wide launch-stream-panel">
+                        <span class="landing-panel-title">Classroom command center</span>
+                        <div class="landing-row"><span>Publish assignment</span><b>Ready</b></div>
+                        <div class="landing-row"><span>Upload study material</span><b>Live</b></div>
+                        <div class="landing-row"><span>Generate AI quiz</span><b>Fast</b></div>
+                    </div>
+                    <div class="landing-panel">
+                        <span class="landing-panel-title">Institution Health</span>
+                        <div class="landing-meter"><span style="width: 86%;"></span></div>
+                        <div class="landing-meter"><span style="width: 72%;"></span></div>
+                        <div class="landing-meter"><span style="width: 94%;"></span></div>
+                    </div>
+                    <div class="landing-panel">
+                        <span class="landing-panel-title">Student Progress</span>
+                        <div class="landing-chart"><span></span><span></span><span></span><span></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="landing-band launch-intro" id="platform">
+        <div>
+            <span class="landing-section-label">Platform</span>
+            <h2>One premium workspace for every academic and operational workflow.</h2>
+            <p class="launch-section-copy">EduMatrix is designed as a complete institutional layer, not just a dashboard. It supports public onboarding, secure account creation, institution scoping, classroom activity, student progress, reporting, communication, and AI-assisted learning.</p>
+        </div>
+        <div class="landing-feature-grid landing-feature-grid-4 launch-feature-grid">
+            <article>
+                <span class="launch-card-index">01</span>
+                <h3>Institution setup</h3>
+                <p>Department management, users, classrooms, institution admins, onboarding inquiries, academic domain validation, and scoped data access.</p>
+            </article>
+            <article>
+                <span class="launch-card-index">02</span>
+                <h3>Classroom OS</h3>
+                <p>Assignments, homework, study materials, class stream, recordings, AI quiz generation, roster, schedule, grading, and attendance workflows.</p>
+            </article>
+            <article>
+                <span class="launch-card-index">03</span>
+                <h3>Student experience</h3>
+                <p>Class joining, assignment submission, attendance insight, grades, notices, messages, learning tools, progress snapshots, and PWA access.</p>
+            </article>
+            <article>
+                <span class="launch-card-index">04</span>
+                <h3>Production-ready platform</h3>
+                <p>Secure data, branded account emails, public domain support, installable app assets, and deployment-ready environment controls.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="landing-split launch-roles" id="roles">
+        <div>
+            <span class="landing-section-label">Role clarity</span>
+            <h2>Designed around what each user actually needs to do.</h2>
+            <p>Platform admins control EduMatrix globally. Institution admins manage only their own institution. Teachers run classroom work. Students complete learning tasks and track progress.</p>
+        </div>
+        <div class="landing-check-list launch-role-list">
+            <div><strong>Platform Admin</strong><span>Launch Center, institution oversight, integrations, platform health, support operations, reports, and global administration.</span></div>
+            <div><strong>Institution Admin</strong><span>Departments, users, classrooms, notices, reports, analytics, institution-scoped access, and operational visibility.</span></div>
+            <div><strong>Teachers</strong><span>Classrooms, assignments, homework, attendance, grades, study materials, recordings, AI quiz generation, and class communication.</span></div>
+            <div><strong>Students</strong><span>Assignments, homework, grades, attendance, classroom materials, notices, messages, study tools, and personal progress.</span></div>
+        </div>
+    </section>
+
+    <section class="landing-band launch-system" id="modules">
+        <div>
+            <span class="landing-section-label">A-Z modules</span>
+            <h2>Everything connected, organized, and ready for real institutions.</h2>
+        </div>
+        <div class="launch-module-grid">
+            <article><b>Academics</b><span>Departments, classrooms, timetable, exams, grades, reports, analytics.</span></article>
+            <article><b>Classwork</b><span>Assignments, homework, recordings, study materials, AI quiz generator, classroom stream.</span></article>
+            <article><b>Communication</b><span>Notices, messages, forum, complaints, feedback, calendar, notifications.</span></article>
+            <article><b>Campus</b><span>Fees, scholarships, hostel, transport, visitors, health records, guardians, discipline.</span></article>
+            <article><b>Learning Tools</b><span>AI study buddy, translator, notes, flashcards, study groups, whiteboard, bookmarks.</span></article>
+            <article><b>Operations</b><span>Launch Center, institution inquiry intake, installable app readiness, account security, and support workflows.</span></article>
+        </div>
+    </section>
+
+    <section class="landing-band launch-security" id="security">
+        <div>
+            <span class="landing-section-label">Security and trust</span>
+            <h2>Built for launch with secure production defaults.</h2>
+        </div>
+        <div class="landing-feature-grid launch-security-grid">
+            <article>
+                <h3>Protected data foundation</h3>
+                <p>EduMatrix is built for production data isolation, institution-scoped access, and secure operational workflows.</p>
+            </article>
+            <article>
+                <h3>Branded email workflows</h3>
+                <p>Verification, welcome, password reset, and support emails use EduMatrix branding and production domain links.</p>
+            </article>
+            <article>
+                <h3>Domain-ready auth</h3>
+                <p>Production environment variables support edumatrix.tech URLs, secure cookies, trusted CSRF origins, HSTS, SSL redirect, and public callback links.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="landing-split launch-process">
+        <div>
+            <span class="landing-section-label">Launch flow</span>
+            <h2>From inquiry to active institution in a clean, trackable process.</h2>
+            <p>Institutions request access from the homepage. EduMatrix validates the institution, prepares the domain-scoped workspace, and then users sign in through secure role-based flows.</p>
+        </div>
+        <div class="launch-timeline">
+            <div><span>1</span><strong>Institution requests access</strong><p>Public contact form captures institute details, contact information, student size, and onboarding needs.</p></div>
+            <div><span>2</span><strong>Domain and role verification</strong><p>Approved academic domains can be linked to institutions before teachers and students are activated.</p></div>
+            <div><span>3</span><strong>Classroom launch</strong><p>Admins create structure, teachers publish work, and students access materials, assignments, grades, and notices.</p></div>
+        </div>
+    </section>
+
+    <section class="landing-band launch-faq">
+        <div>
+            <span class="landing-section-label">Questions</span>
+            <h2>Common launch questions answered.</h2>
+        </div>
+        <div class="launch-faq-grid">
+            <article><h3>Can EduMatrix work for schools, colleges, and universities?</h3><p>Yes. The platform is role-based and institution-scoped, so each organization can manage its own departments, classes, teachers, students, and operations.</p></article>
+            <article><h3>Does it support mobile and tablet users?</h3><p>Yes. EduMatrix includes responsive public pages, dashboard layout safeguards, and PWA support so users can install it as a web app.</p></article>
+            <article><h3>Where do support requests go?</h3><p>Institutions can request onboarding from this page or email support@edumatrix.tech for assistance.</p></article>
+        </div>
+    </section>
+
+    <section id="connect" class="landing-contact launch-contact">
+        <div class="landing-contact-copy">
+            <span class="landing-section-label">Contact Us</span>
+            <h2>Bring EduMatrix to your institution.</h2>
+            <p>Send your details and EduMatrix support will follow up. You can also email <a href="mailto:support@edumatrix.tech">support@edumatrix.tech</a>.</p>
+            <div class="launch-contact-points">
+                <span>Institution onboarding</span>
+                <span>Deployment support</span>
+                <span>Role setup guidance</span>
+            </div>
+        </div>
+
+        <form method="post" class="landing-contact-form glass-strong">
+            {% csrf_token %}
+            {% if messages %}
+            {% for msg in messages %}
+            <div class="alert {% if msg.tags == 'error' %}alert-error{% elif msg.tags == 'success' %}alert-success{% else %}alert-info{% endif %}">
+                {{ msg }}
+            </div>
+            {% endfor %}
+            {% endif %}
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label">Institute Name</label>
+                    <input class="form-input" type="text" name="institute_name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Contact Name</label>
+                    <input class="form-input" type="text" name="contact_name" required>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input class="form-input" type="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input class="form-input" type="text" name="phone">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Students</label>
+                <input class="form-input" type="text" name="student_count" placeholder="e.g. 800 students">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Message</label>
+                <textarea class="form-input" name="message" rows="4" placeholder="Tell us what you want to manage with EduMatrix."></textarea>
+            </div>
+            <button class="btn btn-primary btn-lg btn-full" type="submit">Send Request</button>
+        </form>
+    </section>
+
+    {% include "partials/public_footer.html" %}
+</main>
+{% endblock %}

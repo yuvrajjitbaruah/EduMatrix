@@ -1,0 +1,86 @@
+{% extends 'dashboard/layout.html' %}
+{% block title %}Skill Tracker | EduMatrix{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1 class="page-title">🎯 Skill Tracker</h1><p class="page-subtitle">Track and endorse student skills</p></div></div>
+
+{% if user.role == 'admin' %}
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">Create Skill Badge</h3></div>
+    <div class="card-body">
+        <form method="post" class="form-grid form-grid-2">
+            {% csrf_token %}<input type="hidden" name="action" value="add_badge">
+            <div class="form-group"><label class="form-label">Skill Name</label><input type="text" name="name" class="form-input" required placeholder="e.g. Python Programming"></div>
+            <div class="form-group"><label class="form-label">Icon (Emoji)</label><input type="text" name="icon" class="form-input" value="⭐" maxlength="4"></div>
+            <div class="form-group"><label class="form-label">Category</label><input type="text" name="category" class="form-input" value="General" placeholder="e.g. Programming, Sports"></div>
+            <div class="form-group"><label class="form-label">Description</label><input type="text" name="description" class="form-input" placeholder="What this skill represents..."></div>
+            <div class="form-group" style="grid-column:span 2;"><button type="submit" class="btn btn-primary">Create Badge</button></div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% if user.role in 'admin teacher' %}
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">Endorse Student</h3></div>
+    <div class="card-body">
+        <form method="post" class="form-grid form-grid-3">
+            {% csrf_token %}<input type="hidden" name="action" value="endorse">
+            <div class="form-group"><label class="form-label">Student</label><select name="student_id" class="form-input" required>{% for s in students %}<option value="{{ s.id }}">{{ s.get_full_name|default:s.username }}</option>{% endfor %}</select></div>
+            <div class="form-group"><label class="form-label">Skill</label><select name="skill_id" class="form-input" required>{% for b in all_badges %}<option value="{{ b.id }}">{{ b.icon }} {{ b.name }}</option>{% endfor %}</select></div>
+            <div class="form-group"><label class="form-label">Level (1-5)</label><input type="number" name="level" class="form-input" value="1" min="1" max="5"></div>
+            <div class="form-group" style="grid-column:span 3;"><button type="submit" class="btn btn-primary">Endorse Skill</button></div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- Available Badges -->
+{% if all_badges %}
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">Available Skill Badges</h3></div>
+    <div class="card-body">
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem;">
+            {% for badge in all_badges %}
+            <div style="padding:.5rem 1rem;background:var(--bg-body);border-radius:999px;border:1px solid var(--border-subtle);display:flex;align-items:center;gap:.5rem;">
+                <span style="font-size:1.2rem;">{{ badge.icon }}</span>
+                <span style="font-weight:500;color:var(--text-primary);font-size:.85rem;">{{ badge.name }}</span>
+                <span style="font-size:.75rem;color:var(--text-muted);">{{ badge.category }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Student Skills -->
+<div class="card">
+    <div class="card-header"><h3 class="card-title">{% if user.role == 'student' %}My Skills{% else %}Endorsed Skills{% endif %}</h3></div>
+    <div class="card-body">
+        <div class="grid-responsive">
+            {% for sk in skills %}
+            <div class="feature-card" style="text-align:center;">
+                <div style="font-size:2.5rem;margin-bottom:.5rem;">{{ sk.skill.icon }}</div>
+                <h4 style="color:var(--text-primary);font-weight:600;">{{ sk.skill.name }}</h4>
+                <span class="badge badge-info" style="margin:.5rem 0;">{{ sk.skill.category }}</span>
+                {% if user.role != 'student' %}<p style="font-size:.85rem;color:var(--text-muted);">{{ sk.student.get_full_name|default:sk.student.username }}</p>{% endif %}
+                <!-- Level Progress -->
+                <div style="margin-top:.75rem;">
+                    <div style="display:flex;justify-content:center;gap:.25rem;margin-bottom:.25rem;">
+                        {% for i in "12345"|make_list %}
+                        <span style="font-size:1.2rem;">{% if forloop.counter <= sk.level %}⭐{% else %}☆{% endif %}</span>
+                        {% endfor %}
+                    </div>
+                    <span style="font-size:.8rem;color:var(--text-muted);">Level {{ sk.level }} / 5</span>
+                    <div style="background:var(--bg-body);border-radius:999px;height:6px;margin-top:.25rem;overflow:hidden;">
+                        <div style="height:100%;border-radius:999px;background:linear-gradient(90deg,var(--primary-500),var(--purple-500));width:{% widthratio sk.level 5 100 %}%;"></div>
+                    </div>
+                </div>
+                <p style="font-size:.75rem;color:var(--text-muted);margin-top:.5rem;">Endorsed by {{ sk.endorsed_by.get_full_name|default:sk.endorsed_by.username }}</p>
+            </div>
+            {% empty %}
+            <div class="empty-state" style="grid-column:1/-1;"><div class="empty-state-icon">🎯</div><h3>No skills endorsed yet</h3></div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

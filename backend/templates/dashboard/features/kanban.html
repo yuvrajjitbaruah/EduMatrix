@@ -1,0 +1,164 @@
+{% extends 'dashboard/layout.html' %}
+
+{% block title %}Kanban Board | EduMatrix{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">📋 Kanban Board</h1>
+        <p class="page-subtitle">Organize your tasks visually</p>
+    </div>
+    <div style="display: flex; gap: .5rem; align-items: center; flex-wrap: wrap;">
+        {% for board in boards %}
+        <a href="?board={{ board.id }}" class="btn {% if current_board.id == board.id %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">{{ board.title }}</a>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Create Board -->
+<div class="card mb-6">
+    <div class="card-body" style="padding: 1rem;">
+        <form method="post" style="display: flex; gap: .5rem; align-items: center;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_board">
+            <input type="text" name="title" class="form-input" placeholder="New board name..." required style="margin: 0; flex: 1;">
+            <button type="submit" class="btn btn-primary btn-sm">+ New Board</button>
+        </form>
+    </div>
+</div>
+
+{% if current_board %}
+<!-- Board View -->
+<div style="display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 1rem; min-height: 400px;">
+    {% for column in current_board.columns.all %}
+    <div style="min-width: 280px; max-width: 320px; flex-shrink: 0;">
+        <div style="background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border-subtle); overflow: hidden;">
+            <!-- Column Header -->
+            <div style="padding: .75rem 1rem; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: .5rem;">
+                    <span style="width: 10px; height: 10px; border-radius: 50%; background: var(--{{ column.color }}-500, var(--primary-500));"></span>
+                    <span style="font-weight: 600; color: var(--text-primary);">{{ column.title }}</span>
+                    <span class="badge badge-ghost" style="font-size: .7rem;">{{ column.cards.count }}</span>
+                </div>
+            </div>
+
+            <!-- Cards -->
+            <div style="padding: .5rem; display: flex; flex-direction: column; gap: .5rem; max-height: 500px; overflow-y: auto;">
+                {% for card in column.cards.all %}
+                <div style="background: var(--bg-body); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: .75rem; transition: all .2s;">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <span style="color: var(--text-primary); font-weight: 500; font-size: .9rem;">{{ card.title }}</span>
+                        <span class="badge {% if card.priority == 'high' %}badge-danger{% elif card.priority == 'medium' %}badge-warning{% else %}badge-info{% endif %}" style="font-size: .65rem;">{{ card.priority }}</span>
+                    </div>
+                    {% if card.description %}<p style="font-size: .8rem; color: var(--text-muted); margin-top: .25rem;">{{ card.description|truncatewords:15 }}</p>{% endif %}
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: .5rem;">
+                        {% if card.due_date %}<span style="font-size: .75rem; color: var(--text-muted);">📅 {{ card.due_date }}</span>{% endif %}
+                        <div style="display: flex; gap: .25rem;">
+                            <!-- Move buttons -->
+                            {% if not forloop.parentloop.first %}
+                            <form method="post" style="margin:0;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="move_card">
+                                <input type="hidden" name="card_id" value="{{ card.id }}">
+                                {% with prev_cols=current_board.columns.all %}
+                                {% for pcol in prev_cols %}
+                                {% if pcol.position == column.position|add:"-1" %}
+                                <input type="hidden" name="target_column_id" value="{{ pcol.id }}">
+                                {% endif %}
+                                {% endfor %}
+                                {% endwith %}
+                                <button type="submit" class="btn btn-ghost" style="padding: 2px 6px; font-size: .7rem;">←</button>
+                            </form>
+                            {% endif %}
+                            {% if not forloop.parentloop.last %}
+                            <form method="post" style="margin:0;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="move_card">
+                                <input type="hidden" name="card_id" value="{{ card.id }}">
+                                {% with next_cols=current_board.columns.all %}
+                                {% for ncol in next_cols %}
+                                {% if ncol.position == column.position|add:"1" %}
+                                <input type="hidden" name="target_column_id" value="{{ ncol.id }}">
+                                {% endif %}
+                                {% endfor %}
+                                {% endwith %}
+                                <button type="submit" class="btn btn-ghost" style="padding: 2px 6px; font-size: .7rem;">→</button>
+                            </form>
+                            {% endif %}
+                            <form method="post" style="margin:0;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete_card">
+                                <input type="hidden" name="card_id" value="{{ card.id }}">
+                                <button type="submit" class="btn btn-ghost" style="padding: 2px 6px; font-size: .7rem; color: var(--rose-400);">✕</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Add Card -->
+                <details>
+                    <summary style="cursor: pointer; font-size: .85rem; color: var(--primary-400); padding: .5rem; text-align: center;">+ Add Card</summary>
+                    <form method="post" style="padding: .25rem;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add_card">
+                        <input type="hidden" name="column_id" value="{{ column.id }}">
+                        <input type="text" name="title" class="form-input" placeholder="Card title..." required style="font-size: .85rem;">
+                        <textarea name="description" class="form-input" placeholder="Description..." rows="2" style="font-size: .85rem;"></textarea>
+                        <select name="priority" class="form-input" style="font-size: .85rem;">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                        <input type="date" name="due_date" class="form-input" style="font-size: .85rem;">
+                        <button type="submit" class="btn btn-primary btn-sm" style="width: 100%;">Add</button>
+                    </form>
+                </details>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Add Column -->
+    <div style="min-width: 280px; flex-shrink: 0;">
+        <div style="background: var(--bg-card); border: 2px dashed var(--border-subtle); border-radius: var(--radius-lg); padding: 1rem;">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_column">
+                <input type="hidden" name="board_id" value="{{ current_board.id }}">
+                <input type="text" name="title" class="form-input" placeholder="Column name..." required style="font-size: .85rem;">
+                <select name="color" class="form-input" style="font-size: .85rem;">
+                    <option value="indigo">Indigo</option>
+                    <option value="rose">Rose</option>
+                    <option value="emerald">Emerald</option>
+                    <option value="amber">Amber</option>
+                    <option value="cyan">Cyan</option>
+                </select>
+                <button type="submit" class="btn btn-ghost btn-sm" style="width: 100%;">+ Add Column</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Board -->
+<div style="margin-top: 2rem; text-align: right;">
+    <form method="post" style="display: inline;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete_board">
+        <input type="hidden" name="board_id" value="{{ current_board.id }}">
+        <button type="submit" class="btn btn-ghost btn-sm" style="color: var(--rose-400);" onclick="return confirm('Delete this entire board?')">🗑️ Delete Board</button>
+    </form>
+</div>
+
+{% else %}
+<div class="card">
+    <div class="card-body">
+        <div class="empty-state">
+            <div class="empty-state-icon">📋</div>
+            <h3>No boards yet</h3>
+            <p>Create your first Kanban board above to start organizing tasks</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

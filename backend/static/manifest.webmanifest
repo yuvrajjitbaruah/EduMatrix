@@ -1,0 +1,49 @@
+{
+  "name": "EduMatrix",
+  "short_name": "EduMatrix",
+  "description": "Premium student management platform for institutions, teachers, and students.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#071317",
+  "theme_color": "#0f766e",
+  "categories": ["education", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Open your EduMatrix dashboard",
+      "url": "/dashboard/",
+      "icons": [{ "src": "/static/img/edumatrix-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Assignments",
+      "short_name": "Assignments",
+      "description": "Open assignments",
+      "url": "/dashboard/assignments/",
+      "icons": [{ "src": "/static/img/edumatrix-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Messages",
+      "short_name": "Messages",
+      "description": "Open EduMatrix messages",
+      "url": "/dashboard/inbox/",
+      "icons": [{ "src": "/static/img/edumatrix-icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "icons": [
+    {
+      "src": "/static/img/edumatrix-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/img/edumatrix-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

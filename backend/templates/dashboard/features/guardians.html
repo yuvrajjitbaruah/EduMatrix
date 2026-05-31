@@ -1,0 +1,57 @@
+{% extends 'dashboard/layout.html' %}
+{% block title %}Parent/Guardian Info | EduMatrix{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1 class="page-title">👨‍👩‍👧 Parents & Guardians</h1><p class="page-subtitle">Manage guardian contact information</p></div></div>
+
+{% if user.role == 'student' or user.role == 'admin' %}
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">Add Guardian</h3></div>
+    <div class="card-body">
+        <form method="post" class="form-grid form-grid-2">
+            {% csrf_token %}<input type="hidden" name="action" value="create">
+            {% if user.role == 'admin' %}
+            <div class="form-group" style="grid-column:span 2;"><label class="form-label">Student</label><select name="student_id" class="form-input" required>{% for s in students %}<option value="{{ s.id }}">{{ s.get_full_name|default:s.username }}</option>{% endfor %}</select></div>
+            {% endif %}
+            <div class="form-group"><label class="form-label">Guardian Name</label><input type="text" name="name" class="form-input" required></div>
+            <div class="form-group"><label class="form-label">Relationship</label><select name="relationship" class="form-input" required><option value="father">Father</option><option value="mother">Mother</option><option value="guardian">Guardian</option><option value="sibling">Sibling</option><option value="other">Other</option></select></div>
+            <div class="form-group"><label class="form-label">Phone</label><input type="text" name="phone" class="form-input" required></div>
+            <div class="form-group"><label class="form-label">Email</label><input type="email" name="email" class="form-input"></div>
+            <div class="form-group"><label class="form-label">Occupation</label><input type="text" name="occupation" class="form-input"></div>
+            <div class="form-group"><label class="form-label">Address</label><input type="text" name="address" class="form-input"></div>
+            <div class="form-group" style="grid-column:span 2;"><button type="submit" class="btn btn-primary">Add Guardian</button></div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header"><h3 class="card-title">Guardian Records</h3></div>
+    <div class="card-body">
+        <div class="grid-responsive">
+            {% for g in guardians %}
+            <div class="feature-card">
+                <div style="display:flex;gap:1rem;align-items:start;">
+                    <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--primary-500),var(--purple-500));display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;">👤</div>
+                    <div style="flex:1;">
+                        <h4 style="color:var(--text-primary);font-weight:600;">{{ g.name }}</h4>
+                        <span class="badge badge-info" style="margin:.25rem 0 .5rem;">{{ g.get_relationship_display }}</span>
+                        {% if user.role != 'student' %}<p style="font-size:.8rem;color:var(--text-muted);">Student: {{ g.student.get_full_name|default:g.student.username }}</p>{% endif %}
+                        <div style="font-size:.85rem;color:var(--text-secondary);display:grid;gap:.15rem;margin-top:.25rem;">
+                            <span>📞 {{ g.phone }}</span>
+                            {% if g.email %}<span>📧 {{ g.email }}</span>{% endif %}
+                            {% if g.occupation %}<span>💼 {{ g.occupation }}</span>{% endif %}
+                            {% if g.address %}<span>📍 {{ g.address }}</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% if user.role == 'student' or user.role == 'admin' %}
+                <form method="post" style="margin-top:.75rem;text-align:right;">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="guardian_id" value="{{ g.id }}"><button type="submit" class="btn btn-ghost btn-sm" onclick="return confirm('Remove?')">🗑️ Remove</button></form>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="empty-state" style="grid-column:1/-1;"><div class="empty-state-icon">👨‍👩‍👧</div><h3>No guardians added</h3><p>Add your parent/guardian contact information</p></div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

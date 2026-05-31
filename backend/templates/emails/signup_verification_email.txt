@@ -1,0 +1,13 @@
+Confirm your EduMatrix {{ role_label|lower }} account
+
+Finish your signup:
+{{ verification_link }}
+
+Verification code:
+{{ code }}
+
+You can either click the secure verification link above or enter the code on the EduMatrix verification page.
+
+If you did not start this signup, you can safely ignore this email.
+
+Support: support@edumatrix.tech

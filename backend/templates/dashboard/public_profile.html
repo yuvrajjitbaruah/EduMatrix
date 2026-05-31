@@ -1,0 +1,46 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}User Profile{% endblock %}
+{% block content %}
+<div class="space-y-6 max-w-2xl mx-auto mt-8">
+    <div class="card fade-in" style="text-align: center; padding: 3rem 2rem;">
+        <!-- Avatar -->
+        <div style="width: 7rem; height: 7rem; border-radius: 50%; border: 4px solid var(--border-light); overflow: hidden; background: linear-gradient(135deg, var(--emerald-500), var(--cyan-500)); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 2.5rem; margin: 0 auto 1.5rem auto; box-shadow: 0 8px 24px rgba(0,0,0,0.3);">
+            {% if target_user.profile_picture %}
+                <img src="{{ target_user.profile_picture.url }}" alt="{{ target_user.username }}" style="width: 100%; height: 100%; object-fit: cover;">
+            {% else %}
+                {{ target_user.first_name|make_list|first|default:"U" }}
+            {% endif %}
+        </div>
+        
+        <h1 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0.5rem; color: #fff;">{{ target_user.get_full_name|default:target_user.username }}</h1>
+        <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1.5rem;">
+            <span class="badge {% if target_user.role == 'admin' %}badge-absent{% elif target_user.role == 'teacher' %}badge-pending{% else %}badge-present{% endif %}" style="font-size: 0.8125rem;">
+                {{ target_user.get_role_display }}
+            </span>
+            {% if target_user.department %}
+            <span style="margin-left: 0.5rem;">• {{ target_user.department }}</span>
+            {% endif %}
+        </p>
+
+        <div style="background: var(--surface-bg); border-radius: 1rem; padding: 1.5rem; display: inline-flex; flex-direction: column; gap: 1rem; text-align: left; min-width: 20rem; border: 1px solid var(--border-subtle);">
+            {% if target_user.email %}
+            <div class="flex items-center gap-3">
+                <svg width="20" height="20" fill="none" stroke="var(--emerald-400)" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                <a href="mailto:{{ target_user.email }}" style="color: var(--text-main); text-decoration: none; font-weight: 500;">{{ target_user.email }}</a>
+            </div>
+            {% endif %}
+            
+            {% if target_user.phone_number %}
+            <div class="flex items-center gap-3">
+                <svg width="20" height="20" fill="none" stroke="var(--emerald-400)" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+                <a href="tel:{{ target_user.phone_number }}" style="color: var(--text-main); text-decoration: none; font-weight: 500;">{{ target_user.phone_number }}</a>
+            </div>
+            {% endif %}
+            
+            {% if not target_user.phone_number and not target_user.email %}
+            <p style="color: var(--text-muted); font-size: 0.8125rem; margin: 0; text-align: center;">No contact information available.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

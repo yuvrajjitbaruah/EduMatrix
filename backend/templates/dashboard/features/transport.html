@@ -1,0 +1,91 @@
+{% extends 'dashboard/layout.html' %}
+{% block title %}Transport Management | EduMatrix{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">🚌 Transport Management</h1>
+        <p class="page-subtitle">Manage bus routes and student transport</p>
+    </div>
+</div>
+
+<div class="stats-grid stats-grid-3">
+    <div class="stat-card"><div class="stat-icon" style="background: linear-gradient(135deg, var(--primary-500), var(--purple-500));">🚌</div><div class="stat-info"><div class="stat-value">{{ routes.count }}</div><div class="stat-label">Total Routes</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">✅</div><div class="stat-info"><div class="stat-value">{{ active_routes }}</div><div class="stat-label">Active Routes</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #6366f1);">👥</div><div class="stat-info"><div class="stat-value">{{ total_passengers }}</div><div class="stat-label">Total Passengers</div></div></div>
+</div>
+
+{% if user.role == 'admin' %}
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">Add New Route</h3></div>
+    <div class="card-body">
+        <form method="post" class="form-grid form-grid-2">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_route">
+            <div class="form-group"><label class="form-label">Route Name</label><input type="text" name="route_name" class="form-input" placeholder="e.g. Route A — City Center" required></div>
+            <div class="form-group"><label class="form-label">Driver Name</label><input type="text" name="driver_name" class="form-input" required></div>
+            <div class="form-group"><label class="form-label">Driver Phone</label><input type="text" name="driver_phone" class="form-input" required></div>
+            <div class="form-group"><label class="form-label">Vehicle Number</label><input type="text" name="vehicle_number" class="form-input" required></div>
+            <div class="form-group"><label class="form-label">Capacity</label><input type="number" name="capacity" class="form-input" value="40"></div>
+            <div class="form-group" style="display:flex;align-items:flex-end;"><button type="submit" class="btn btn-primary" style="width:100%;">Add Route</button></div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% if user.role == 'student' and my_transport %}
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">🎫 My Transport</h3></div>
+    <div class="card-body">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div><span style="color: var(--text-muted); font-size: .85rem;">Route</span><p style="color: var(--text-primary); font-weight: 600;">{{ my_transport.route.route_name }}</p></div>
+            <div><span style="color: var(--text-muted); font-size: .85rem;">Pickup Point</span><p style="color: var(--text-primary); font-weight: 600;">{{ my_transport.pickup_point }}</p></div>
+            <div><span style="color: var(--text-muted); font-size: .85rem;">Pickup Time</span><p style="color: var(--text-primary); font-weight: 600;">{{ my_transport.pickup_time }}</p></div>
+            <div><span style="color: var(--text-muted); font-size: .85rem;">Vehicle</span><p style="color: var(--text-primary); font-weight: 600;">{{ my_transport.route.vehicle_number }}</p></div>
+            <div><span style="color: var(--text-muted); font-size: .85rem;">Driver</span><p style="color: var(--text-primary); font-weight: 600;">{{ my_transport.route.driver_name }} ({{ my_transport.route.driver_phone }})</p></div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header"><h3 class="card-title">Bus Routes</h3></div>
+    <div class="card-body">
+        <div class="grid-responsive">
+            {% for route in routes %}
+            <div class="feature-card">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: .75rem;">
+                    <h4 style="color: var(--text-primary); font-weight: 600;">{{ route.route_name }}</h4>
+                    <span class="badge {% if route.is_active %}badge-success{% else %}badge-ghost{% endif %}">{% if route.is_active %}Active{% else %}Inactive{% endif %}</span>
+                </div>
+                <div style="display: grid; gap: .25rem; font-size: .85rem; color: var(--text-secondary); margin-bottom: .75rem;">
+                    <span>🚗 {{ route.vehicle_number }}</span>
+                    <span>👤 {{ route.driver_name }} — {{ route.driver_phone }}</span>
+                    <span>👥 {{ route.occupancy }} / {{ route.capacity }} passengers</span>
+                </div>
+                <div style="background: var(--bg-body); border-radius: 999px; height: 6px; overflow: hidden; margin-bottom: .75rem;">
+                    <div style="height: 100%; border-radius: 999px; width: {% widthratio route.occupancy route.capacity 100 %}%; background: {% if route.occupancy >= route.capacity %}var(--rose-500){% elif route.occupancy > route.capacity|divisibleby:2 %}var(--amber-500){% else %}var(--emerald-500){% endif %};"></div>
+                </div>
+                {% if user.role == 'student' and not my_transport %}
+                <form method="post" style="display: flex; gap: .5rem; flex-wrap: wrap;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="assign">
+                    <input type="hidden" name="route_id" value="{{ route.id }}">
+                    <input type="text" name="pickup_point" class="form-input" placeholder="Pickup point" required style="flex:1;margin:0;font-size:.85rem;">
+                    <input type="time" name="pickup_time" class="form-input" required style="width:120px;margin:0;font-size:.85rem;">
+                    <button type="submit" class="btn btn-primary btn-sm">Assign</button>
+                </form>
+                {% endif %}
+                {% if user.role == 'admin' %}
+                <div style="display: flex; gap: .5rem;">
+                    <form method="post" style="margin:0;"><{% csrf_token %}<input type="hidden" name="action" value="toggle_route"><input type="hidden" name="route_id" value="{{ route.id }}"><button type="submit" class="btn btn-ghost btn-sm">{% if route.is_active %}Deactivate{% else %}Activate{% endif %}</button></form>
+                    <form method="post" style="margin:0;">{% csrf_token %}<input type="hidden" name="action" value="delete_route"><input type="hidden" name="route_id" value="{{ route.id }}"><button type="submit" class="btn btn-ghost btn-sm" style="color:var(--rose-400);" onclick="return confirm('Delete?')">🗑️</button></form>
+                </div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="empty-state" style="grid-column: 1/-1;"><div class="empty-state-icon">🚌</div><h3>No routes configured</h3></div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

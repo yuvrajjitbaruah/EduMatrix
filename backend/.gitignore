@@ -1,0 +1,19 @@
+# Backend-specific ignores (inherits from root .gitignore)
+
+# Django collected static
+staticfiles/
+
+# Media uploads (user-generated content)
+media/
+
+# Migrations (optional — keep if you want reviewers to see schema history)
+# Uncomment the lines below if you prefer to exclude migrations:
+# */migrations/*.py
+# !*/migrations/__init__.py
+
+# Logs
+*.log
+runserver.*.log
+
+# Local DB
+db.sqlite3

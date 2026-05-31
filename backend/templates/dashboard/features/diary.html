@@ -1,0 +1,90 @@
+{% extends 'dashboard/layout.html' %}
+
+{% block title %}My Diary | EduMatrix{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">📔 My Diary</h1>
+        <p class="page-subtitle">Your private journal • {{ total }} entries</p>
+    </div>
+</div>
+
+<!-- New Entry -->
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">Write New Entry</h3></div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+            <div class="form-group">
+                <label class="form-label">Title</label>
+                <input type="text" name="title" class="form-input" placeholder="Today's thoughts..." required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">How are you feeling?</label>
+                <div style="display: flex; gap: .5rem; flex-wrap: wrap;">
+                    {% for emoji, label in mood_choices %}
+                    <label style="cursor: pointer;">
+                        <input type="radio" name="mood" value="{{ emoji }}" style="display:none;" {% if forloop.first %}checked{% endif %}>
+                        <span class="mood-btn" style="font-size: 1.8rem; padding: .3rem .5rem; border-radius: .5rem; border: 2px solid transparent; display: inline-block; transition: all .2s;" title="{{ label }}">{{ emoji }}</span>
+                    </label>
+                    {% endfor %}
+                    <!-- Fallback moods if template var not available -->
+                    <label style="cursor:pointer;"><input type="radio" name="mood" value="😊" style="display:none;" checked><span class="mood-btn" style="font-size:1.8rem;padding:.3rem .5rem;border-radius:.5rem;border:2px solid var(--primary-500);display:inline-block;">😊</span></label>
+                    <label style="cursor:pointer;"><input type="radio" name="mood" value="😐" style="display:none;"><span class="mood-btn" style="font-size:1.8rem;padding:.3rem .5rem;border-radius:.5rem;border:2px solid transparent;display:inline-block;">😐</span></label>
+                    <label style="cursor:pointer;"><input type="radio" name="mood" value="😔" style="display:none;"><span class="mood-btn" style="font-size:1.8rem;padding:.3rem .5rem;border-radius:.5rem;border:2px solid transparent;display:inline-block;">😔</span></label>
+                    <label style="cursor:pointer;"><input type="radio" name="mood" value="🤩" style="display:none;"><span class="mood-btn" style="font-size:1.8rem;padding:.3rem .5rem;border-radius:.5rem;border:2px solid transparent;display:inline-block;">🤩</span></label>
+                    <label style="cursor:pointer;"><input type="radio" name="mood" value="😴" style="display:none;"><span class="mood-btn" style="font-size:1.8rem;padding:.3rem .5rem;border-radius:.5rem;border:2px solid transparent;display:inline-block;">😴</span></label>
+                    <label style="cursor:pointer;"><input type="radio" name="mood" value="😤" style="display:none;"><span class="mood-btn" style="font-size:1.8rem;padding:.3rem .5rem;border-radius:.5rem;border:2px solid transparent;display:inline-block;">😤</span></label>
+                    <label style="cursor:pointer;"><input type="radio" name="mood" value="🤔" style="display:none;"><span class="mood-btn" style="font-size:1.8rem;padding:.3rem .5rem;border-radius:.5rem;border:2px solid transparent;display:inline-block;">🤔</span></label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Entry</label>
+                <textarea name="content" class="form-input" rows="5" placeholder="Write your thoughts..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">💾 Save Entry</button>
+        </form>
+    </div>
+</div>
+
+<!-- Entries -->
+<div class="card">
+    <div class="card-header"><h3 class="card-title">Journal Entries</h3></div>
+    <div class="card-body">
+        {% for entry in entries %}
+        <div class="list-item">
+            <div style="font-size: 2rem; margin-right: 1rem;">{{ entry.mood }}</div>
+            <div class="list-item-content" style="flex: 1;">
+                <h4 style="color: var(--text-primary); font-weight: 600;">{{ entry.title }}</h4>
+                <p style="color: var(--text-secondary); font-size: .9rem; margin: .25rem 0;">{{ entry.content|truncatewords:40 }}</p>
+                <span style="font-size: .8rem; color: var(--text-muted);">{{ entry.date }}</span>
+            </div>
+            <form method="post" style="margin:0;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="entry_id" value="{{ entry.id }}">
+                <button type="submit" class="btn btn-ghost btn-sm" onclick="return confirm('Delete this entry?')">🗑️</button>
+            </form>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📔</div>
+            <h3>Your diary is empty</h3>
+            <p>Start writing your first entry above</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+// Mood radio button highlighting
+document.querySelectorAll('input[name="mood"]').forEach(r => {
+    r.addEventListener('change', () => {
+        document.querySelectorAll('.mood-btn').forEach(b => b.style.border = '2px solid transparent');
+        r.nextElementSibling.style.border = '2px solid var(--primary-500)';
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,150 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}Classrooms{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="page-title">Classrooms</h1>
+            <p class="page-subtitle">View and manage academic classrooms{% if institution_name %} for {{ institution_name }}{% endif %}.</p>
+        </div>
+        {% if can_manage_classes %}
+        <button class="btn btn-primary" onclick="document.getElementById('addClassModal').style.display='flex'" {% if not departments %}disabled{% endif %}>
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Add Class
+        </button>
+        {% elif user.role == 'student' %}
+        <button class="btn btn-primary" onclick="document.getElementById('joinClassModal').style.display='flex'">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Join Class
+        </button>
+        {% endif %}
+    </div>
+
+    {% if can_manage_classes and not departments %}
+    <div class="alert alert-info">Create at least one active department before adding classes.</div>
+    {% endif %}
+
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Class Name</th>
+                        <th>Subject</th>
+                        <th>Department</th>
+                        <th>Semester</th>
+                        <th>Teacher</th>
+                        <th>Students</th>
+                        {% if can_manage_classes %}
+                        <th>Class Code</th>
+                        <th style="text-align: right;">Actions</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cls in classes %}
+                    <tr class="fade-in" style="animation-delay: {{ forloop.counter0 }}00ms;">
+                        <td style="font-weight: 600;">
+                            <a href="{% url 'classroom_detail' cls.id %}" style="text-decoration: none; color: var(--cyan-400);">{{ cls.name }}</a>
+                        </td>
+                        <td>{{ cls.subject }}</td>
+                        <td><span class="badge badge-pending">{{ cls.department }}</span></td>
+                        <td>{{ cls.semester }}</td>
+                        <td>{{ cls.teacher.get_full_name|default:cls.teacher.username }}</td>
+                        <td style="font-weight: 700;">{{ cls.students.count }}</td>
+                        {% if can_manage_classes %}
+                        <td style="font-family: monospace; font-weight: bold; font-size: 0.9em; letter-spacing: 1px;">{{ cls.class_code }}</td>
+                        <td style="text-align: right;">
+                            <form method="post" action="{% url 'classes' %}" onsubmit="return confirm('Are you sure you want to delete {{ cls.name }}?');" style="margin:0;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="class_id" value="{{ cls.id }}">
+                                <button type="submit" class="btn" style="padding: 0.25rem 0.625rem; font-size: 0.75rem; background: var(--red-500); color: white;">Delete</button>
+                            </form>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">No classrooms found yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if can_manage_classes %}
+    <div id="addClassModal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 1rem;">
+        <div class="card" style="width: 100%; max-width: 28rem; padding: 0; overflow: hidden; border: 1px solid var(--border-light);">
+            <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
+                <h3 style="font-weight: 700;">Add New Class</h3>
+                <button onclick="document.getElementById('addClassModal').style.display='none'" style="background: none; border: none; color: var(--text-muted); cursor: pointer;">x</button>
+            </div>
+            <form method="post" action="{% url 'classes' %}" style="padding: 1.5rem;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.8125rem; font-weight: 600; margin-bottom: 0.5rem;">Class Name / Section</label>
+                    <input type="text" name="name" required placeholder="e.g. CS-101 A" style="width: 100%; padding: 0.625rem; border-radius: 0.5rem; border: 1px solid var(--border-subtle); background: var(--surface-light); color: var(--text-main); outline: none;">
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.8125rem; font-weight: 600; margin-bottom: 0.5rem;">Subject Name</label>
+                    <input type="text" name="subject" required placeholder="e.g. Intro to Programming" style="width: 100%; padding: 0.625rem; border-radius: 0.5rem; border: 1px solid var(--border-subtle); background: var(--surface-light); color: var(--text-main); outline: none;">
+                </div>
+                <div class="grid-2" style="gap: 1rem; margin-bottom: 1rem;">
+                    <div class="form-group">
+                        <label style="display: block; font-size: 0.8125rem; font-weight: 600; margin-bottom: 0.5rem;">Department</label>
+                        <select name="department" required style="width: 100%; padding: 0.625rem; border-radius: 0.5rem; border: 1px solid var(--border-subtle); background: var(--surface-light); color: var(--text-main); outline: none;">
+                            {% for department in departments %}
+                            <option value="{{ department.name }}">{{ department.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label style="display: block; font-size: 0.8125rem; font-weight: 600; margin-bottom: 0.5rem;">Semester</label>
+                        <input type="text" name="semester" required style="width: 100%; padding: 0.625rem; border-radius: 0.5rem; border: 1px solid var(--border-subtle); background: var(--surface-light); color: var(--text-main); outline: none;">
+                    </div>
+                </div>
+                {% if user.role == 'admin' or user.role == 'institution_admin' %}
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="display: block; font-size: 0.8125rem; font-weight: 600; margin-bottom: 0.5rem;">Assign Teacher</label>
+                    <select name="teacher_id" style="width: 100%; padding: 0.625rem; border-radius: 0.5rem; border: 1px solid var(--border-subtle); background: var(--surface-light); color: var(--text-main); outline: none;">
+                        {% for t in teachers %}
+                        <option value="{{ t.id }}">{{ t.get_full_name|default:t.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+                <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('addClassModal').style.display='none'">Cancel</button>
+                    <button type="submit" class="btn btn-primary" {% if not departments %}disabled{% endif %}>Create Class</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if user.role == 'student' %}
+    <div id="joinClassModal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 1rem;">
+        <div class="card" style="width: 100%; max-width: 28rem; padding: 0; border: 1px solid var(--border-light);">
+            <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
+                <h3 style="font-weight: 700;">Join a Classroom</h3>
+                <button onclick="document.getElementById('joinClassModal').style.display='none'" style="background: none; border: none; color: var(--text-muted); cursor: pointer;">x</button>
+            </div>
+            <form method="post" action="{% url 'classes' %}" style="padding: 1.5rem;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="join">
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="display: block; font-size: 0.8125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-main);">Class Code</label>
+                    <input type="text" name="class_code" required placeholder="Enter 6-character code" style="width: 100%; padding: 0.625rem; border-radius: 0.5rem; border: 1px solid var(--border-subtle); background: var(--bg-input); color: var(--text-main); outline: none;">
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">Ask your teacher for the class code, then enter it here.</p>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('joinClassModal').style.display='none'">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Join Class</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

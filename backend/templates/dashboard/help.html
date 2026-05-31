@@ -1,0 +1,100 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}Help & FAQ{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div>
+        <h1 class="page-title">Help & FAQ 🙋</h1>
+        <p class="page-subtitle">Find answers to common questions</p>
+    </div>
+
+    {% if categories %}
+    {% for category, faqs in categories.items %}
+    <div class="card fade-in">
+        <h3 style="font-size: 1.125rem; font-weight: 800; margin-bottom: 1rem; color: var(--indigo-500);">{{ category }}</h3>
+        <div class="space-y-4">
+            {% for faq in faqs %}
+            <details style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
+                <summary style="font-weight: 700; font-size: 0.9375rem; cursor: pointer; padding: 0.5rem 0; list-style: none; display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="color: var(--indigo-500); transition: transform 0.2s;">▶</span>
+                    {{ faq.question }}
+                </summary>
+                <div style="padding: 0.75rem 0 0.25rem 1.5rem; font-size: 0.875rem; color: var(--text-secondary); line-height: 1.7;">
+                    {{ faq.answer }}
+                </div>
+            </details>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <!-- Default helpful content -->
+    <div class="card fade-in">
+        <h3 style="font-size: 1.125rem; font-weight: 800; margin-bottom: 1rem; color: var(--indigo-500);">🎓 Getting Started</h3>
+        <div class="space-y-4">
+            <details style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;" open>
+                <summary style="font-weight: 700; font-size: 0.9375rem; cursor: pointer; padding: 0.5rem 0;">How do I join a class?</summary>
+                <div style="padding: 0.75rem 0 0.25rem 1.5rem; font-size: 0.875rem; color: var(--text-secondary); line-height: 1.7;">
+                    Go to <strong>Classrooms</strong> from the sidebar. Enter the class code provided by your teacher in the "Join Class" field and click Join. You'll immediately see the class in your dashboard.
+                </div>
+            </details>
+            <details style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
+                <summary style="font-weight: 700; font-size: 0.9375rem; cursor: pointer; padding: 0.5rem 0;">How do I submit an assignment?</summary>
+                <div style="padding: 0.75rem 0 0.25rem 1.5rem; font-size: 0.875rem; color: var(--text-secondary); line-height: 1.7;">
+                    Navigate to <strong>Assignments</strong>, click on the assignment you want to submit, and use the submission form at the bottom. You can type your answer or upload a file.
+                </div>
+            </details>
+            <details style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
+                <summary style="font-weight: 700; font-size: 0.9375rem; cursor: pointer; padding: 0.5rem 0;">How do I check my attendance?</summary>
+                <div style="padding: 0.75rem 0 0.25rem 1.5rem; font-size: 0.875rem; color: var(--text-secondary); line-height: 1.7;">
+                    Students can view their attendance from <strong>My Attendance</strong> in the sidebar. You can filter by class and see your overall attendance percentage.
+                </div>
+            </details>
+            <details style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
+                <summary style="font-weight: 700; font-size: 0.9375rem; cursor: pointer; padding: 0.5rem 0;">How do I send a message?</summary>
+                <div style="padding: 0.75rem 0 0.25rem 1.5rem; font-size: 0.875rem; color: var(--text-secondary); line-height: 1.7;">
+                    Go to <strong>Messages</strong> → <strong>Compose</strong>. Select the recipient, type your subject and message, then click Send.
+                </div>
+            </details>
+            <details style="padding-bottom: 1rem;">
+                <summary style="font-weight: 700; font-size: 0.9375rem; cursor: pointer; padding: 0.5rem 0;">How are XP and badges earned?</summary>
+                <div style="padding: 0.75rem 0 0.25rem 1.5rem; font-size: 0.875rem; color: var(--text-secondary); line-height: 1.7;">
+                    You earn XP automatically by attending classes (10 XP each), submitting assignments (25 XP each), and scoring well on exams. Badges are awarded for milestones like streaks, perfect attendance, and high scores. Check the <strong>Achievements</strong> page for details.
+                </div>
+            </details>
+        </div>
+    </div>
+
+    <div class="card fade-in fade-delay-1">
+        <h3 style="font-size: 1.125rem; font-weight: 800; margin-bottom: 1rem; color: var(--emerald-500);">👨‍🏫 For Teachers</h3>
+        <div class="space-y-4">
+            <details style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
+                <summary style="font-weight: 700; font-size: 0.9375rem; cursor: pointer; padding: 0.5rem 0;">How do I create a class?</summary>
+                <div style="padding: 0.75rem 0 0.25rem 1.5rem; font-size: 0.875rem; color: var(--text-secondary); line-height: 1.7;">
+                    Go to <strong>Classrooms</strong> and click <strong>Create Class</strong>. Fill in the class name, subject, and department. A unique class code will be generated for students to join.
+                </div>
+            </details>
+            <details style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
+                <summary style="font-weight: 700; font-size: 0.9375rem; cursor: pointer; padding: 0.5rem 0;">How do I mark attendance?</summary>
+                <div style="padding: 0.75rem 0 0.25rem 1.5rem; font-size: 0.875rem; color: var(--text-secondary); line-height: 1.7;">
+                    Go to <strong>Mark Attendance</strong>, select a class and date, then mark each student as Present, Absent, or Late and save.
+                </div>
+            </details>
+            <details style="padding-bottom: 1rem;">
+                <summary style="font-weight: 700; font-size: 0.9375rem; cursor: pointer; padding: 0.5rem 0;">How do I create & grade assignments?</summary>
+                <div style="padding: 0.75rem 0 0.25rem 1.5rem; font-size: 0.875rem; color: var(--text-secondary); line-height: 1.7;">
+                    Go to <strong>Assignments</strong> → <strong>Create Assignment</strong>. After students submit, click on the assignment to view submissions. Enter marks and feedback for each student.
+                </div>
+            </details>
+        </div>
+    </div>
+
+    <div class="card fade-in fade-delay-2">
+        <h3 style="font-size: 1.125rem; font-weight: 800; margin-bottom: 1rem; color: var(--amber-500);">📧 Contact Support</h3>
+        <p style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.7;">
+            If you can't find the answer you're looking for, please contact the system administrator or use the <strong>Messages</strong> feature to reach out to your teacher or admin directly.
+        </p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

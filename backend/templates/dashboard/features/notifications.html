@@ -1,0 +1,94 @@
+{% extends 'dashboard/layout.html' %}
+{% block title %}Notification Preferences | EduMatrix{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1 class="page-title">🔔 Notification Preferences</h1><p class="page-subtitle">Control what notifications you receive</p></div></div>
+
+<div class="card" style="max-width:600px;">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+
+            <div style="display:flex;flex-direction:column;gap:.25rem;">
+                {% for field, icon, label, desc in notification_items %}
+                {% endfor %}
+
+                <!-- Notices -->
+                <label style="display:flex;align-items:center;justify-content:space-between;padding:1rem;border-radius:var(--radius-md);cursor:pointer;transition:background .2s;" onmouseover="this.style.background='var(--bg-body)'" onmouseout="this.style.background='transparent'">
+                    <div style="display:flex;align-items:center;gap:1rem;">
+                        <span style="font-size:1.5rem;">📢</span>
+                        <div><strong style="color:var(--text-primary);">Notices & Announcements</strong><p style="font-size:.8rem;color:var(--text-muted);margin:0;">Important campus announcements</p></div>
+                    </div>
+                    <div class="toggle-switch"><input type="checkbox" name="notice_enabled" id="notice" {% if prefs.notice_enabled %}checked{% endif %}><label for="notice"></label></div>
+                </label>
+
+                <!-- Messages -->
+                <label style="display:flex;align-items:center;justify-content:space-between;padding:1rem;border-radius:var(--radius-md);cursor:pointer;transition:background .2s;" onmouseover="this.style.background='var(--bg-body)'" onmouseout="this.style.background='transparent'">
+                    <div style="display:flex;align-items:center;gap:1rem;">
+                        <span style="font-size:1.5rem;">💬</span>
+                        <div><strong style="color:var(--text-primary);">Messages</strong><p style="font-size:.8rem;color:var(--text-muted);margin:0;">Direct messages from users</p></div>
+                    </div>
+                    <div class="toggle-switch"><input type="checkbox" name="message_enabled" id="message" {% if prefs.message_enabled %}checked{% endif %}><label for="message"></label></div>
+                </label>
+
+                <!-- Assignments -->
+                <label style="display:flex;align-items:center;justify-content:space-between;padding:1rem;border-radius:var(--radius-md);cursor:pointer;transition:background .2s;" onmouseover="this.style.background='var(--bg-body)'" onmouseout="this.style.background='transparent'">
+                    <div style="display:flex;align-items:center;gap:1rem;">
+                        <span style="font-size:1.5rem;">📝</span>
+                        <div><strong style="color:var(--text-primary);">Assignments</strong><p style="font-size:.8rem;color:var(--text-muted);margin:0;">New assignments and deadlines</p></div>
+                    </div>
+                    <div class="toggle-switch"><input type="checkbox" name="assignment_enabled" id="assignment" {% if prefs.assignment_enabled %}checked{% endif %}><label for="assignment"></label></div>
+                </label>
+
+                <!-- Grades -->
+                <label style="display:flex;align-items:center;justify-content:space-between;padding:1rem;border-radius:var(--radius-md);cursor:pointer;transition:background .2s;" onmouseover="this.style.background='var(--bg-body)'" onmouseout="this.style.background='transparent'">
+                    <div style="display:flex;align-items:center;gap:1rem;">
+                        <span style="font-size:1.5rem;">📊</span>
+                        <div><strong style="color:var(--text-primary);">Grades</strong><p style="font-size:.8rem;color:var(--text-muted);margin:0;">Grade updates and report cards</p></div>
+                    </div>
+                    <div class="toggle-switch"><input type="checkbox" name="grade_enabled" id="grade" {% if prefs.grade_enabled %}checked{% endif %}><label for="grade"></label></div>
+                </label>
+
+                <!-- Attendance -->
+                <label style="display:flex;align-items:center;justify-content:space-between;padding:1rem;border-radius:var(--radius-md);cursor:pointer;transition:background .2s;" onmouseover="this.style.background='var(--bg-body)'" onmouseout="this.style.background='transparent'">
+                    <div style="display:flex;align-items:center;gap:1rem;">
+                        <span style="font-size:1.5rem;">✅</span>
+                        <div><strong style="color:var(--text-primary);">Attendance</strong><p style="font-size:.8rem;color:var(--text-muted);margin:0;">Attendance alerts and reports</p></div>
+                    </div>
+                    <div class="toggle-switch"><input type="checkbox" name="attendance_enabled" id="attendance" {% if prefs.attendance_enabled %}checked{% endif %}><label for="attendance"></label></div>
+                </label>
+
+                <!-- Events -->
+                <label style="display:flex;align-items:center;justify-content:space-between;padding:1rem;border-radius:var(--radius-md);cursor:pointer;transition:background .2s;" onmouseover="this.style.background='var(--bg-body)'" onmouseout="this.style.background='transparent'">
+                    <div style="display:flex;align-items:center;gap:1rem;">
+                        <span style="font-size:1.5rem;">📅</span>
+                        <div><strong style="color:var(--text-primary);">Events & Calendar</strong><p style="font-size:.8rem;color:var(--text-muted);margin:0;">Upcoming events and holidays</p></div>
+                    </div>
+                    <div class="toggle-switch"><input type="checkbox" name="event_enabled" id="event" {% if prefs.event_enabled %}checked{% endif %}><label for="event"></label></div>
+                </label>
+
+                <!-- Forum -->
+                <label style="display:flex;align-items:center;justify-content:space-between;padding:1rem;border-radius:var(--radius-md);cursor:pointer;transition:background .2s;" onmouseover="this.style.background='var(--bg-body)'" onmouseout="this.style.background='transparent'">
+                    <div style="display:flex;align-items:center;gap:1rem;">
+                        <span style="font-size:1.5rem;">💭</span>
+                        <div><strong style="color:var(--text-primary);">Forum Replies</strong><p style="font-size:.8rem;color:var(--text-muted);margin:0;">Replies to your forum posts</p></div>
+                    </div>
+                    <div class="toggle-switch"><input type="checkbox" name="forum_enabled" id="forum" {% if prefs.forum_enabled %}checked{% endif %}><label for="forum"></label></div>
+                </label>
+            </div>
+
+            <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border-subtle);">
+                <button type="submit" class="btn btn-primary" style="width:100%;">💾 Save Preferences</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.toggle-switch { position:relative; width:50px; height:26px; flex-shrink:0; }
+.toggle-switch input { display:none; }
+.toggle-switch label { position:absolute; inset:0; background:var(--bg-body); border-radius:999px; cursor:pointer; transition:all .3s; border:2px solid var(--border-subtle); }
+.toggle-switch label::after { content:''; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:var(--text-muted); transition:all .3s; }
+.toggle-switch input:checked + label { background:var(--primary-500); border-color:var(--primary-500); }
+.toggle-switch input:checked + label::after { transform:translateX(24px); background:white; }
+</style>
+{% endblock %}

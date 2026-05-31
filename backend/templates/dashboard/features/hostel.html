@@ -1,0 +1,91 @@
+{% extends 'dashboard/layout.html' %}
+{% block title %}Hostel Management | EduMatrix{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1 class="page-title">🏠 Hostel Management</h1><p class="page-subtitle">Manage hostel rooms and allocations</p></div></div>
+
+<div class="stats-grid stats-grid-3">
+    <div class="stat-card"><div class="stat-icon" style="background: linear-gradient(135deg, var(--primary-500), var(--purple-500));">🏠</div><div class="stat-info"><div class="stat-value">{{ rooms.count }}</div><div class="stat-label">Total Rooms</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">👥</div><div class="stat-info"><div class="stat-value">{{ total_occupied }}</div><div class="stat-label">Occupied Beds</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #6366f1);">🛏️</div><div class="stat-info"><div class="stat-value">{{ available }}</div><div class="stat-label">Available Beds</div></div></div>
+</div>
+
+{% if user.role == 'admin' %}
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">Add New Room</h3></div>
+    <div class="card-body">
+        <form method="post" class="form-grid form-grid-3">
+            {% csrf_token %}<input type="hidden" name="action" value="add_room">
+            <div class="form-group"><label class="form-label">Building</label><input type="text" name="building" class="form-input" required></div>
+            <div class="form-group"><label class="form-label">Room Number</label><input type="text" name="room_number" class="form-input" required></div>
+            <div class="form-group"><label class="form-label">Floor</label><input type="number" name="floor" class="form-input" value="0"></div>
+            <div class="form-group"><label class="form-label">Capacity</label><input type="number" name="capacity" class="form-input" value="2"></div>
+            <div class="form-group"><label class="form-label">Type</label><select name="room_type" class="form-input"><option value="single">Single</option><option value="double" selected>Double</option><option value="triple">Triple</option><option value="dormitory">Dormitory</option></select></div>
+            <div class="form-group" style="display: flex; flex-direction: column; gap: .5rem; justify-content: flex-end;">
+                <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;"><input type="checkbox" name="has_ac" style="width:16px;height:16px;"> AC</label>
+                <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;"><input type="checkbox" name="has_attached_bath" style="width:16px;height:16px;"> Attached Bath</label>
+            </div>
+            <div class="form-group" style="grid-column: span 3;"><button type="submit" class="btn btn-primary">Add Room</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">Allocate Student</h3></div>
+    <div class="card-body">
+        <form method="post" class="form-grid form-grid-2">
+            {% csrf_token %}<input type="hidden" name="action" value="allocate">
+            <div class="form-group"><label class="form-label">Student</label><select name="student_id" class="form-input" required>{% for s in students %}<option value="{{ s.id }}">{{ s.get_full_name|default:s.username }}</option>{% endfor %}</select></div>
+            <div class="form-group"><label class="form-label">Room</label><select name="room_id" class="form-input" required>{% for r in rooms %}<option value="{{ r.id }}">{{ r.building }} - {{ r.room_number }} ({{ r.current_occupancy }}/{{ r.capacity }})</option>{% endfor %}</select></div>
+            <div class="form-group"><label class="form-label">Check-in Date</label><input type="date" name="check_in" class="form-input" required></div>
+            <div class="form-group"><label class="form-label">Monthly Fee (₹)</label><input type="number" name="monthly_fee" class="form-input" value="0"></div>
+            <div class="form-group" style="grid-column: span 2;"><button type="submit" class="btn btn-primary">Allocate</button></div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">Rooms</h3></div>
+    <div class="card-body">
+        <div class="grid-responsive">
+            {% for room in rooms %}
+            <div class="feature-card">
+                <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:.5rem;">
+                    <h4 style="color:var(--text-primary);font-weight:600;">{{ room.building }} — {{ room.room_number }}</h4>
+                    <span class="badge {% if room.is_full %}badge-danger{% else %}badge-success{% endif %}">{% if room.is_full %}Full{% else %}Available{% endif %}</span>
+                </div>
+                <div style="font-size:.85rem;color:var(--text-secondary);display:grid;gap:.2rem;margin-bottom:.5rem;">
+                    <span>Floor {{ room.floor }} • {{ room.get_room_type_display }}</span>
+                    <span>👥 {{ room.current_occupancy }} / {{ room.capacity }}</span>
+                    <span>{% if room.has_ac %}❄️ AC{% endif %} {% if room.has_attached_bath %}🚿 Bath{% endif %}</span>
+                </div>
+                <div style="background:var(--bg-body);border-radius:999px;height:6px;overflow:hidden;">
+                    <div style="height:100%;border-radius:999px;width:{% widthratio room.current_occupancy room.capacity 100 %}%;background:{% if room.is_full %}var(--rose-500){% else %}var(--emerald-500){% endif %};"></div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state" style="grid-column:1/-1;"><div class="empty-state-icon">🏠</div><h3>No rooms configured</h3></div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h3 class="card-title">Current Allocations</h3></div>
+    <div class="card-body">
+        {% for alloc in allocations %}
+        <div class="list-item">
+            <div class="list-item-content">
+                <strong style="color:var(--text-primary);">{% if user.role == 'student' %}{{ alloc.room.building }} — Room {{ alloc.room.room_number }}{% else %}{{ alloc.student.get_full_name|default:alloc.student.username }}{% endif %}</strong>
+                <span style="font-size:.85rem;color:var(--text-muted);">{% if user.role != 'student' %}{{ alloc.room.building }} — Room {{ alloc.room.room_number }} • {% endif %}Check-in: {{ alloc.check_in }}{% if alloc.monthly_fee %} • ₹{{ alloc.monthly_fee }}/month{% endif %}</span>
+            </div>
+            {% if user.role == 'admin' and not alloc.check_out %}
+            <form method="post" style="margin:0;">{% csrf_token %}<input type="hidden" name="action" value="checkout"><input type="hidden" name="alloc_id" value="{{ alloc.id }}"><button type="submit" class="btn btn-ghost btn-sm">Check Out</button></form>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="empty-state"><div class="empty-state-icon">🛏️</div><h3>No allocations</h3></div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

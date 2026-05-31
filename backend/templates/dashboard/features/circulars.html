@@ -1,0 +1,47 @@
+{% extends 'dashboard/layout.html' %}
+{% block title %}Circulars | EduMatrix{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1 class="page-title">📄 Circulars & Memos</h1><p class="page-subtitle">{{ total }} circulars • {{ urgent_count }} urgent</p></div></div>
+
+{% if user.role in 'admin teacher' %}
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">Publish Circular</h3></div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}<input type="hidden" name="action" value="create">
+            <div class="form-grid form-grid-2">
+                <div class="form-group"><label class="form-label">Title</label><input type="text" name="title" class="form-input" required></div>
+                <div class="form-group"><label class="form-label">Department</label><input type="text" name="department" class="form-input" placeholder="All or specific"></div>
+                <div class="form-group" style="grid-column:span 2;"><label class="form-label">Content</label><textarea name="content" class="form-input" rows="4" required></textarea></div>
+                <div class="form-group"><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;"><input type="checkbox" name="is_urgent" style="width:18px;height:18px;"><span class="form-label" style="margin:0;color:var(--rose-400);">🚨 Mark as Urgent</span></label></div>
+                <div class="form-group" style="display:flex;align-items:flex-end;"><button type="submit" class="btn btn-primary" style="width:100%;">📄 Publish</button></div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header"><h3 class="card-title">All Circulars</h3></div>
+    <div class="card-body">
+        {% for c in circulars %}
+        <div class="list-item" style="border-left:4px solid {% if c.is_urgent %}var(--rose-500){% else %}var(--primary-500){% endif %};">
+            <div class="list-item-content" style="flex:1;">
+                <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-bottom:.25rem;">
+                    {% if c.is_urgent %}<span class="badge badge-danger">🚨 URGENT</span>{% endif %}
+                    <strong style="color:var(--text-primary);font-size:1.05rem;">{{ c.title }}</strong>
+                    {% if c.department %}<span class="badge badge-ghost">{{ c.department }}</span>{% endif %}
+                </div>
+                <p style="color:var(--text-secondary);font-size:.9rem;margin:.5rem 0;white-space:pre-line;">{{ c.content }}</p>
+                <span style="font-size:.8rem;color:var(--text-muted);">📌 {{ c.issued_by.get_full_name|default:c.issued_by.username }} • {{ c.issued_date }}</span>
+            </div>
+            {% if user.role in 'admin teacher' %}
+            <form method="post" style="margin:0;">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="circular_id" value="{{ c.id }}"><button type="submit" class="btn btn-ghost btn-sm" onclick="return confirm('Delete?')">🗑️</button></form>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="empty-state"><div class="empty-state-icon">📄</div><h3>No circulars published</h3></div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends 'dashboard/layout.html' %}
+{% block title %}Study Groups | EduMatrix{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1 class="page-title">👥 Study Groups</h1><p class="page-subtitle">Collaborate and learn together</p></div></div>
+
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">Create Study Group</h3></div>
+    <div class="card-body">
+        <form method="post" class="form-grid form-grid-2">
+            {% csrf_token %}<input type="hidden" name="action" value="create">
+            <div class="form-group"><label class="form-label">Group Name</label><input type="text" name="name" class="form-input" required placeholder="e.g. Physics Study Circle"></div>
+            <div class="form-group"><label class="form-label">Max Members</label><input type="number" name="max_members" class="form-input" value="10" min="2"></div>
+            <div class="form-group"><label class="form-label">Course (Optional)</label><select name="class_id" class="form-input"><option value="">General</option>{% for cls in user_classes %}<option value="{{ cls.id }}">{{ cls.name }}</option>{% endfor %}</select></div>
+            <div class="form-group"><label class="form-label">Description</label><input type="text" name="description" class="form-input" placeholder="What's this group about?"></div>
+            <div class="form-group" style="grid-column:span 2;"><button type="submit" class="btn btn-primary">Create Group</button></div>
+        </form>
+    </div>
+</div>
+
+{% if my_groups %}
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">My Groups</h3></div>
+    <div class="card-body">
+        <div class="grid-responsive">
+            {% for group in my_groups %}
+            <div class="feature-card">
+                <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:.5rem;">
+                    <h4 style="color:var(--text-primary);font-weight:600;">{{ group.name }}</h4>
+                    <span class="badge badge-info">{{ group.members.count }}/{{ group.max_members }}</span>
+                </div>
+                {% if group.description %}<p style="font-size:.85rem;color:var(--text-muted);margin-bottom:.5rem;">{{ group.description }}</p>{% endif %}
+                <div style="display:flex;flex-wrap:wrap;gap:.25rem;margin-bottom:.75rem;">
+                    {% for member in group.members.all %}
+                    <span style="font-size:.75rem;padding:.15rem .5rem;background:var(--bg-body);border-radius:999px;color:var(--text-secondary);">{{ member.first_name|default:member.username }}</span>
+                    {% endfor %}
+                </div>
+
+                <!-- Group Chat -->
+                <details>
+                    <summary style="cursor:pointer;color:var(--primary-400);font-size:.85rem;">💬 Group Chat</summary>
+                    <div style="max-height:200px;overflow-y:auto;margin:.5rem 0;padding:.5rem;background:var(--bg-body);border-radius:var(--radius-md);">
+                        {% for msg in group_messages|dictsort:"id" %}
+                        {% if msg == group.id %}{% endif %}
+                        {% endfor %}
+                        {% with msgs=group_messages %}
+                        {% for gid, gmessages in msgs.items %}
+                        {% if gid == group.id %}
+                        {% for msg in gmessages reversed %}
+                        <div style="margin-bottom:.5rem;">
+                            <span style="font-size:.75rem;font-weight:600;color:var(--primary-400);">{{ msg.sender.first_name|default:msg.sender.username }}</span>
+                            <p style="font-size:.85rem;color:var(--text-secondary);">{{ msg.content }}</p>
+                        </div>
+                        {% empty %}
+                        <p style="font-size:.85rem;color:var(--text-muted);text-align:center;">No messages yet</p>
+                        {% endfor %}
+                        {% endif %}
+                        {% endfor %}
+                        {% endwith %}
+                    </div>
+                    <form method="post" style="display:flex;gap:.5rem;">
+                        {% csrf_token %}<input type="hidden" name="action" value="send_message"><input type="hidden" name="group_id" value="{{ group.id }}">
+                        <input type="text" name="content" class="form-input" placeholder="Type a message..." required style="margin:0;flex:1;font-size:.85rem;">
+                        <button type="submit" class="btn btn-primary btn-sm">Send</button>
+                    </form>
+                </details>
+
+                <div style="display:flex;gap:.5rem;margin-top:.75rem;">
+                    <form method="post" style="margin:0;flex:1;">{% csrf_token %}<input type="hidden" name="action" value="leave"><input type="hidden" name="group_id" value="{{ group.id }}"><button type="submit" class="btn btn-ghost btn-sm" style="width:100%;">Leave</button></form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if available_groups %}
+<div class="card">
+    <div class="card-header"><h3 class="card-title">Available Groups</h3></div>
+    <div class="card-body">
+        <div class="grid-responsive">
+            {% for group in available_groups %}
+            <div class="feature-card">
+                <h4 style="color:var(--text-primary);font-weight:600;">{{ group.name }}</h4>
+                {% if group.description %}<p style="font-size:.85rem;color:var(--text-muted);margin:.25rem 0;">{{ group.description }}</p>{% endif %}
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.5rem;">
+                    <span class="badge badge-ghost">{{ group.members.count }}/{{ group.max_members }} members</span>
+                    {% if group.members.count < group.max_members %}
+                    <form method="post" style="margin:0;">{% csrf_token %}<input type="hidden" name="action" value="join"><input type="hidden" name="group_id" value="{{ group.id }}"><button type="submit" class="btn btn-primary btn-sm">Join</button></form>
+                    {% else %}<span class="badge badge-danger">Full</span>{% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

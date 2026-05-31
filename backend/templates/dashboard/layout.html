@@ -1,0 +1,797 @@
+﻿{% extends "base.html" %}
+{% load static %}
+
+{% block body %}
+<!-- Mesh Background -->
+<div class="mesh-bg">
+    <div class="mesh-blob mesh-blob-1"></div>
+    <div class="mesh-blob mesh-blob-2"></div>
+    <div class="mesh-blob mesh-blob-3"></div>
+</div>
+
+<div class="app-layout">
+    <!-- Mobile Hamburger -->
+    <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+
+    <!-- Mobile Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <!-- Logo -->
+        <div class="sidebar-logo">
+            <div class="sidebar-logo-meta">
+                <img src="{% static 'img/edumatrix-logo-transparent.png' %}" alt="EduMatrix" class="sidebar-logo-image">
+                {% if user.institution_id %}
+                <span class="sidebar-institution-name">{{ user.institution.name }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- User Info -->
+        <div class="sidebar-user">
+            <div class="sidebar-user-avatar">
+                {{ user.first_name|make_list|first|default:"U" }}{{ user.last_name|make_list|first|default:"" }}
+            </div>
+            <div class="sidebar-user-info">
+                <div class="sidebar-user-name">{{ user.get_full_name|default:user.username }}</div>
+                <div class="sidebar-user-role">
+                    <span class="dot dot-{{ user.role }}"></span>
+                    <span>{{ user.get_role_display|upper }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="sidebar-nav">
+            {% if user.role == 'admin' %}
+                <a href="{% url 'dashboard_home' %}" class="sidebar-link {% if request.path == '/dashboard/' %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> Dashboard</a>
+                <a href="{% url 'smart_command_center' %}" class="sidebar-link {% if 'command-center' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16v6H4z"/><path d="M4 14h7v6H4z"/><path d="M15 14h5v6h-5z"/></svg> Power Center</a>
+                <a href="{% url 'planner' %}" class="sidebar-link {% if 'planner' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4"/><path d="M16 2v4"/><path d="M3 10h18"/><path d="M8 15h4"/></svg> Planner</a>
+                <a href="{% url 'launch_center' %}" class="sidebar-link {% if 'launch-center' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v6"/><path d="M5 5l4 4"/><path d="M19 5l-4 4"/><path d="M12 22s7-4 7-11a7 7 0 10-14 0c0 7 7 11 7 11z"/></svg> Launch Center</a>
+                <a href="{% url 'integrations_hub' %}" class="sidebar-link {% if 'integrations' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 7h10v10H7z"/><path d="M4 12h3"/><path d="M17 12h3"/><path d="M12 4v3"/><path d="M12 17v3"/></svg> Integrations</a>
+                <a href="{% url 'departments' %}" class="sidebar-link {% if 'departments' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 22V4a2 2 0 012-2h8a2 2 0 012 2v18Z"/><path d="M6 12H4a2 2 0 00-2 2v6a2 2 0 002 2h2"/><path d="M18 9h2a2 2 0 012 2v9a2 2 0 01-2 2h-2"/></svg> Departments</a>
+                <a href="{% url 'classes' %}" class="sidebar-link {% if 'classes' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg> Classrooms</a>
+                <a href="{% url 'timetable' %}" class="sidebar-link {% if 'timetable' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Timetable</a>
+                <a href="{% url 'users_list' %}" class="sidebar-link {% if 'users' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></svg> Users</a>
+                <div class="sidebar-section-label">Academics</div>
+                <a href="{% url 'reports' %}" class="sidebar-link {% if 'reports' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> Reports</a>
+                <a href="{% url 'analytics' %}" class="sidebar-link {% if 'analytics' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Analytics</a>
+                <a href="{% url 'exam_seating' %}" class="sidebar-link {% if 'exam-seating' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg> Exam Seating</a>
+                <div class="sidebar-section-label">Management</div>
+                <a href="{% url 'fees' %}" class="sidebar-link {% if 'fees' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Fee Management</a>
+                <a href="{% url 'scholarships' %}" class="sidebar-link {% if 'scholarships' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5"/></svg> Scholarships</a>
+                <a href="{% url 'inventory' %}" class="sidebar-link {% if 'inventory' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg> Inventory</a>
+                <a href="{% url 'discipline' %}" class="sidebar-link {% if 'discipline' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Discipline</a>
+                <div class="sidebar-section-label">Campus</div>
+                <a href="{% url 'transport' %}" class="sidebar-link {% if 'transport' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 17h14v-5H5"/><path d="M5 12V6a2 2 0 012-2h10a2 2 0 012 2v6"/></svg> Transport</a>
+                <a href="{% url 'hostel' %}" class="sidebar-link {% if 'hostel' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Hostel</a>
+                <a href="{% url 'visitors' %}" class="sidebar-link {% if 'visitors' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg> Visitors</a>
+                <a href="{% url 'health_records' %}" class="sidebar-link {% if 'health' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Health Records</a>
+                <a href="{% url 'guardians' %}" class="sidebar-link {% if 'guardians' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></svg> Guardians</a>
+                <div class="sidebar-section-label">Communication</div>
+                <a href="{% url 'notices' %}" class="sidebar-link {% if 'notices' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Notices</a>
+                <a href="{% url 'inbox' %}" class="sidebar-link {% if 'inbox' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Messages</a>
+                <a href="{% url 'forum' %}" class="sidebar-link {% if 'forum' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> Forum</a>
+                <a href="{% url 'complaints' %}" class="sidebar-link {% if 'complaints' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg> Complaints</a>
+                <a href="{% url 'feedback' %}" class="sidebar-link {% if 'feedback' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Feedback</a>
+                <a href="{% url 'calendar' %}" class="sidebar-link {% if 'calendar' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Calendar</a>
+                <div class="sidebar-section-label">AI Tools</div>
+                <a href="{% url 'ai_chat' %}" class="sidebar-link {% if 'ai/chat' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> AI Study Buddy</a>
+                <a href="{% url 'ai_quiz' %}" class="sidebar-link {% if 'ai/quiz' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> AI Quiz Generator</a>
+                <a href="{% url 'translate' %}" class="sidebar-link {% if 'translate' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg> Translator & TTS</a>
+                <a href="{% url 'notes' %}" class="sidebar-link {% if 'notes' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Quick Notes</a>
+                <div class="sidebar-section-label">Productivity</div>
+                <a href="{% url 'todos' %}" class="sidebar-link {% if 'todos' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg> Todo List</a>
+                <a href="{% url 'study_groups' %}" class="sidebar-link {% if 'study-groups' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> Study Groups</a>
+                <a href="{% url 'flashcards' %}" class="sidebar-link {% if 'flashcards' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="12" x2="22" y2="12"/></svg> Flashcards</a>
+                <a href="{% url 'pomodoro' %}" class="sidebar-link {% if 'pomodoro' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Pomodoro Timer</a>
+                <a href="{% url 'whiteboard' %}" class="sidebar-link {% if 'whiteboard' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg> Whiteboard</a>
+                <div class="sidebar-section-label">More</div>
+                <a href="{% url 'polls' %}" class="sidebar-link {% if 'polls' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> Polls</a>
+                <a href="{% url 'bookmarks' %}" class="sidebar-link {% if 'bookmarks' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg> Bookmarks</a>
+                <a href="{% url 'activity' %}" class="sidebar-link {% if 'activity' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Activity</a>
+                <a href="{% url 'notifications_prefs' %}" class="sidebar-link {% if 'notification' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg> Notifications</a>
+                <a href="{% url 'help' %}" class="sidebar-link {% if 'help' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/></svg> Help & FAQ</a>
+
+            {% elif user.role == 'institution_admin' %}
+                <a href="{% url 'dashboard_home' %}" class="sidebar-link {% if request.path == '/dashboard/' %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> Dashboard</a>
+                <a href="{% url 'smart_command_center' %}" class="sidebar-link {% if 'command-center' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16v6H4z"/><path d="M4 14h7v6H4z"/><path d="M15 14h5v6h-5z"/></svg> Power Center</a>
+                <a href="{% url 'planner' %}" class="sidebar-link {% if 'planner' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4"/><path d="M16 2v4"/><path d="M3 10h18"/><path d="M8 15h4"/></svg> Planner</a>
+                <a href="{% url 'departments' %}" class="sidebar-link {% if 'departments' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 22V4a2 2 0 012-2h8a2 2 0 012 2v18Z"/><path d="M6 12H4a2 2 0 00-2 2v6a2 2 0 002 2h2"/><path d="M18 9h2a2 2 0 012 2v9a2 2 0 01-2 2h-2"/></svg> Departments</a>
+                <a href="{% url 'classes' %}" class="sidebar-link {% if 'classes' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg> Classrooms</a>
+                <a href="{% url 'timetable' %}" class="sidebar-link {% if 'timetable' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Timetable</a>
+                <a href="{% url 'users_list' %}" class="sidebar-link {% if 'users' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></svg> Users</a>
+                <div class="sidebar-section-label">Operations</div>
+                <a href="{% url 'reports' %}" class="sidebar-link {% if 'reports' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> Reports</a>
+                <a href="{% url 'analytics' %}" class="sidebar-link {% if 'analytics' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Analytics</a>
+                <a href="{% url 'notices' %}" class="sidebar-link {% if 'notices' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Notices</a>
+                <a href="{% url 'inbox' %}" class="sidebar-link {% if 'inbox' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Messages</a>
+                <a href="{% url 'feedback' %}" class="sidebar-link {% if 'feedback' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Feedback</a>
+                <a href="{% url 'calendar' %}" class="sidebar-link {% if 'calendar' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Calendar</a>
+                <div class="sidebar-section-label">AI Tools</div>
+                <a href="{% url 'ai_chat' %}" class="sidebar-link {% if 'ai/chat' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> AI Study Buddy</a>
+                <a href="{% url 'translate' %}" class="sidebar-link {% if 'translate' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg> Translator</a>
+                <a href="{% url 'notes' %}" class="sidebar-link {% if 'notes' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Quick Notes</a>
+                <a href="{% url 'whiteboard' %}" class="sidebar-link {% if 'whiteboard' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg> Whiteboard</a>
+                <div class="sidebar-section-label">Support</div>
+                <a href="{% url 'help' %}" class="sidebar-link {% if 'help' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/></svg> Help & FAQ</a>
+
+            {% elif user.role == 'teacher' %}
+                <a href="{% url 'dashboard_home' %}" class="sidebar-link {% if request.path == '/dashboard/' %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> Dashboard</a>
+                <a href="{% url 'smart_command_center' %}" class="sidebar-link {% if 'command-center' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16v6H4z"/><path d="M4 14h7v6H4z"/><path d="M15 14h5v6h-5z"/></svg> Power Center</a>
+                <a href="{% url 'planner' %}" class="sidebar-link {% if 'planner' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4"/><path d="M16 2v4"/><path d="M3 10h18"/><path d="M8 15h4"/></svg> Planner</a>
+                <a href="{% url 'mark_attendance' %}" class="sidebar-link {% if 'attendance' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg> Mark Attendance</a>
+                <a href="{% url 'classes' %}" class="sidebar-link {% if 'classes' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg> Classrooms</a>
+                <a href="{% url 'timetable' %}" class="sidebar-link {% if 'timetable' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Timetable</a>
+                <div class="sidebar-section-label">Classroom</div>
+                <a href="{% url 'assignments' %}" class="sidebar-link {% if 'assignments' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Assignments</a>
+                <a href="{% url 'homework' %}" class="sidebar-link {% if 'homework' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg> Homework</a>
+                <a href="{% url 'recordings' %}" class="sidebar-link {% if 'recordings' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg> Recordings</a>
+                <a href="{% url 'ai_quiz' %}" class="sidebar-link {% if 'ai/quiz' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> AI Quiz Gen</a>
+                <a href="{% url 'grades' %}" class="sidebar-link {% if 'grades' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg> Manage Grades</a>
+                <a href="{% url 'reports' %}" class="sidebar-link {% if 'reports' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> Reports</a>
+                <a href="{% url 'analytics' %}" class="sidebar-link {% if 'analytics' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Analytics</a>
+                <a href="{% url 'users_list' %}" class="sidebar-link {% if 'users' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> Students</a>
+                <a href="{% url 'exam_seating' %}" class="sidebar-link {% if 'exam-seating' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg> Exam Seating</a>
+                <a href="{% url 'discipline' %}" class="sidebar-link {% if 'discipline' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Discipline</a>
+                <div class="sidebar-section-label">Communication</div>
+                <a href="{% url 'leave_requests' %}" class="sidebar-link {% if 'leave' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Leave Requests</a>
+                <a href="{% url 'notices' %}" class="sidebar-link {% if 'notices' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Notices</a>
+                <a href="{% url 'inbox' %}" class="sidebar-link {% if 'inbox' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Messages</a>
+                <a href="{% url 'forum' %}" class="sidebar-link {% if 'forum' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> Forum</a>
+                <a href="{% url 'complaints' %}" class="sidebar-link {% if 'complaints' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg> Complaints</a>
+                <a href="{% url 'feedback' %}" class="sidebar-link {% if 'feedback' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Feedback</a>
+                <a href="{% url 'calendar' %}" class="sidebar-link {% if 'calendar' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Calendar</a>
+                <div class="sidebar-section-label">AI & Productivity</div>
+                <a href="{% url 'ai_chat' %}" class="sidebar-link {% if 'ai/chat' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> AI Study Buddy</a>
+                <a href="{% url 'translate' %}" class="sidebar-link {% if 'translate' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg> Translator</a>
+                <a href="{% url 'notes' %}" class="sidebar-link {% if 'notes' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Quick Notes</a>
+                <a href="{% url 'whiteboard' %}" class="sidebar-link {% if 'whiteboard' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg> Whiteboard</a>
+                <div class="sidebar-section-label">More</div>
+                <a href="{% url 'polls' %}" class="sidebar-link {% if 'polls' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> Polls</a>
+                <a href="{% url 'todos' %}" class="sidebar-link {% if 'todos' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg> Todo List</a>
+                <a href="{% url 'pomodoro' %}" class="sidebar-link {% if 'pomodoro' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Pomodoro</a>
+                <a href="{% url 'study_groups' %}" class="sidebar-link {% if 'study-groups' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> Study Groups</a>
+                <a href="{% url 'flashcards' %}" class="sidebar-link {% if 'flashcards' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="12" x2="22" y2="12"/></svg> Flashcards</a>
+                <a href="{% url 'bookmarks' %}" class="sidebar-link {% if 'bookmarks' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg> Bookmarks</a>
+                <a href="{% url 'activity' %}" class="sidebar-link {% if 'activity' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Activity</a>
+                <a href="{% url 'notifications_prefs' %}" class="sidebar-link {% if 'notification' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg> Notifications</a>
+                <a href="{% url 'help' %}" class="sidebar-link {% if 'help' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/></svg> Help & FAQ</a>
+
+            {% else %}
+                <a href="{% url 'dashboard_home' %}" class="sidebar-link {% if request.path == '/dashboard/' %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> Dashboard</a>
+                <a href="{% url 'smart_command_center' %}" class="sidebar-link {% if 'command-center' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16v6H4z"/><path d="M4 14h7v6H4z"/><path d="M15 14h5v6h-5z"/></svg> Power Center</a>
+                <a href="{% url 'planner' %}" class="sidebar-link {% if 'planner' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4"/><path d="M16 2v4"/><path d="M3 10h18"/><path d="M8 15h4"/></svg> Planner</a>
+                <a href="{% url 'classes' %}" class="sidebar-link {% if 'classes' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg> Classrooms</a>
+                <a href="{% url 'my_attendance' %}" class="sidebar-link {% if 'my-attendance' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg> My Attendance</a>
+                <a href="{% url 'timetable' %}" class="sidebar-link {% if 'timetable' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Timetable</a>
+                <div class="sidebar-section-label">Classroom</div>
+                <a href="{% url 'assignments' %}" class="sidebar-link {% if 'assignments' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Assignments</a>
+                <a href="{% url 'homework' %}" class="sidebar-link {% if 'homework' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg> Homework</a>
+                <a href="{% url 'recordings' %}" class="sidebar-link {% if 'recordings' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg> Recordings</a>
+                <a href="{% url 'ai_quiz' %}" class="sidebar-link {% if 'ai/quiz' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> AI Quiz Gen</a>
+                <a href="{% url 'grades' %}" class="sidebar-link {% if 'grades' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg> My Grades</a>
+                <a href="{% url 'analytics' %}" class="sidebar-link {% if 'analytics' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Analytics</a>
+                <a href="{% url 'exam_seating' %}" class="sidebar-link {% if 'exam-seating' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg> Exam Seating</a>
+                <a href="{% url 'achievements' %}" class="sidebar-link {% if 'achievements' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Achievements</a>
+                <a href="{% url 'scholarships' %}" class="sidebar-link {% if 'scholarships' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5"/></svg> Scholarships</a>
+                <div class="sidebar-section-label">Communication</div>
+                <a href="{% url 'leave_requests' %}" class="sidebar-link {% if 'leave' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Leave Request</a>
+                <a href="{% url 'notices' %}" class="sidebar-link {% if 'notices' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Notices</a>
+                <a href="{% url 'inbox' %}" class="sidebar-link {% if 'inbox' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Messages</a>
+                <a href="{% url 'forum' %}" class="sidebar-link {% if 'forum' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> Forum</a>
+                <a href="{% url 'complaints' %}" class="sidebar-link {% if 'complaints' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg> Complaints</a>
+                <a href="{% url 'feedback' %}" class="sidebar-link {% if 'feedback' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Feedback</a>
+                <a href="{% url 'calendar' %}" class="sidebar-link {% if 'calendar' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Calendar</a>
+                <a href="{% url 'fees' %}" class="sidebar-link {% if 'fees' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> My Fees</a>
+                <div class="sidebar-section-label">My Info</div>
+                <a href="{% url 'guardians' %}" class="sidebar-link {% if 'guardians' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> Guardians</a>
+                <a href="{% url 'health_records' %}" class="sidebar-link {% if 'health' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Health Record</a>
+                <a href="{% url 'transport' %}" class="sidebar-link {% if 'transport' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 17h14v-5H5"/><path d="M5 12V6a2 2 0 012-2h10a2 2 0 012 2v6"/></svg> My Transport</a>
+                <a href="{% url 'mood' %}" class="sidebar-link {% if 'mood' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/></svg> Mood Tracker</a>
+                <a href="{% url 'diary' %}" class="sidebar-link {% if 'diary' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg> Diary</a>
+                <div class="sidebar-section-label">AI Tools</div>
+                <a href="{% url 'ai_chat' %}" class="sidebar-link {% if 'ai/chat' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> AI Study Buddy</a>
+                <a href="{% url 'translate' %}" class="sidebar-link {% if 'translate' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg> Translator</a>
+                <a href="{% url 'notes' %}" class="sidebar-link {% if 'notes' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Quick Notes</a>
+                <div class="sidebar-section-label">Productivity</div>
+                <a href="{% url 'todos' %}" class="sidebar-link {% if 'todos' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg> Todo List</a>
+                <a href="{% url 'study_groups' %}" class="sidebar-link {% if 'study-groups' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> Study Groups</a>
+                <a href="{% url 'flashcards' %}" class="sidebar-link {% if 'flashcards' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="12" x2="22" y2="12"/></svg> Flashcards</a>
+                <a href="{% url 'pomodoro' %}" class="sidebar-link {% if 'pomodoro' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Pomodoro Timer</a>
+                <a href="{% url 'whiteboard' %}" class="sidebar-link {% if 'whiteboard' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg> Whiteboard</a>
+                <div class="sidebar-section-label">More</div>
+                <a href="{% url 'polls' %}" class="sidebar-link {% if 'polls' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> Polls</a>
+                <a href="{% url 'bookmarks' %}" class="sidebar-link {% if 'bookmarks' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg> Bookmarks</a>
+                <a href="{% url 'activity' %}" class="sidebar-link {% if 'activity' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Activity</a>
+                <a href="{% url 'notifications_prefs' %}" class="sidebar-link {% if 'notification' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg> Notifications</a>
+                <a href="{% url 'help' %}" class="sidebar-link {% if 'help' in request.path %}active{% endif %}"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/></svg> Help & FAQ</a>
+
+            {% endif %}
+
+        </nav>
+
+        <!-- Logout -->
+        <div class="sidebar-footer">
+            <a href="{% url 'logout' %}" class="sidebar-link logout">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Logout
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <button class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')" aria-label="Toggle sidebar navigation">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <button class="header-search command-trigger" type="button" data-command-trigger onclick="window.openCommandPalette && window.openCommandPalette()" aria-label="Search EduMatrix">
+                    <span class="icon">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    </span>
+                    <span class="command-trigger-text">Search pages and tools</span>
+                </button>
+            </div>
+
+            <div class="header-right">
+                <!-- Global Search -->
+                <button type="button" class="header-icon-btn" data-command-trigger onclick="window.openCommandPalette && window.openCommandPalette()" title="Search" aria-label="Search EduMatrix">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </button>
+
+                <!-- Theme -->
+                <button type="button" class="header-icon-btn" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">
+                    <svg id="theme-icon-sun" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                    <svg id="theme-icon-moon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none;"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+                </button>
+
+                <!-- Notifications -->
+                <a href="{% url 'notices' %}" class="header-icon-btn" title="Notifications" style="text-decoration: none;">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                    <span class="header-badge">3</span>
+                </a>
+
+                <!-- Messages -->
+                <a href="{% url 'inbox' %}" class="header-icon-btn" title="Messages" style="text-decoration: none;">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                </a>
+
+                <div class="header-divider"></div>
+
+                <!-- User -->
+                <a href="{% url 'profile_settings' %}" style="text-decoration: none;" class="header-user">
+                    <div class="header-user-info">
+                        <div class="header-user-name">{{ user.get_full_name|default:user.username }}</div>
+                        <div class="header-user-role">{{ user.get_role_display|upper }}</div>
+                    </div>
+                    <div class="header-user-avatar" style="overflow: hidden; padding: 0;">
+                        {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture.url }}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                            <span style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                                {{ user.first_name|make_list|first|default:"U" }}{{ user.last_name|make_list|first|default:"" }}
+                            </span>
+                        {% endif %}
+                    </div>
+                </a>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="main-container">
+            {% if messages %}
+            <div class="space-y-2" style="margin-bottom: 1rem;">
+                {% for message in messages %}
+                <div class="alert {% if message.tags == 'error' %}alert-error{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+</div>
+
+<div class="command-palette" id="commandPalette" aria-hidden="true">
+    <div class="command-backdrop" data-command-close></div>
+    <div class="command-panel" role="dialog" aria-modal="true" aria-label="Search EduMatrix">
+        <div class="command-input-wrap">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="search" id="commandInput" placeholder="Search pages and tools" autocomplete="off" />
+        </div>
+        <div class="command-hints">
+            <span>Try: attendance, message, assignment, AI quiz, reports</span>
+            <kbd>Ctrl</kbd><kbd>K</kbd>
+        </div>
+        <div class="command-results" id="commandResults"></div>
+    </div>
+</div>
+
+<script>
+function toggleTheme() {
+    const html = document.documentElement;
+    const current = html.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    updateThemeIcons(next);
+}
+
+function updateThemeIcons(theme) {
+    const sun = document.getElementById('theme-icon-sun');
+    const moon = document.getElementById('theme-icon-moon');
+    if (sun) sun.style.display = theme === 'dark' ? 'none' : 'block';
+    if (moon) moon.style.display = theme === 'dark' ? 'block' : 'none';
+}
+
+// Initialize theme
+(function() {
+    const preferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', preferred);
+    updateThemeIcons(preferred);
+})();
+
+// Sidebar Toggle for Mobile
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+    document.body.style.overflow = sidebar.classList.contains('open') ? 'hidden' : '';
+}
+
+function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    sidebar.classList.remove('open');
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// Close sidebar when clicking a link (mobile)
+document.querySelectorAll('.sidebar-link').forEach(link => {
+    link.addEventListener('click', () => {
+        if (window.innerWidth <= 768) closeSidebar();
+    });
+});
+
+// Close sidebar on window resize to desktop
+window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) closeSidebar();
+});
+
+// Global command palette
+(function() {
+    const palette = document.getElementById('commandPalette');
+    const input = document.getElementById('commandInput');
+    const results = document.getElementById('commandResults');
+    let items = [];
+    let activeIndex = 0;
+
+    function cleanText(value) {
+        return (value || '').replace(/\s+/g, ' ').trim();
+    }
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function quickActionItems() {
+        const actions = [
+            { title: 'Open Power Center', section: 'Command', href: "{% url 'smart_command_center' %}", keywords: 'command center power operations action board' },
+            { title: 'Automation Studio', section: 'Command', href: "{% url 'smart_command_center' %}#automation-studio", keywords: 'automation sweep auto planner rules workflow' },
+            { title: 'Workflow Recipes', section: 'Command', href: "{% url 'smart_command_center' %}#workflow-recipes", keywords: 'recipe bundle playbook planner sprint routine workflow' },
+            { title: 'Open Planner', section: 'Command', href: "{% url 'planner' %}", keywords: 'today tasks schedule plan todo' },
+            { title: 'Compose Message', section: 'Communication', href: "{% url 'compose_message' %}", keywords: 'email inbox send message contact' },
+            { title: 'Open AI Study Buddy', section: 'AI', href: "{% url 'ai_chat' %}", keywords: 'ai study help chat assistant doubt' },
+            { title: 'Generate AI Quiz', section: 'AI', href: "{% url 'ai_quiz' %}", keywords: 'quiz test assessment revision questions' },
+            { title: 'Translate and TTS', section: 'AI', href: "{% url 'translate' %}", keywords: 'translate voice tts language' },
+            { title: 'Open Calendar', section: 'Planning', href: "{% url 'calendar' %}", keywords: 'events schedule dates timetable' },
+            { title: 'Profile and Security', section: 'Account', href: "{% url 'profile_settings' %}", keywords: 'username password account security profile' },
+            { title: 'Help Center', section: 'Support', href: "{% url 'help' %}", keywords: 'faq support help guide' },
+            {% if user.role == 'admin' or user.role == 'institution_admin' %}
+            { title: 'Review Open Requests', section: 'Admin', href: "{% url 'smart_command_center' %}#open-requests", keywords: 'institution requests onboarding leads contact' },
+            { title: 'Manage Users', section: 'Admin', href: "{% url 'users_list' %}", keywords: 'student teacher admin account users' },
+            { title: 'Manage Departments', section: 'Admin', href: "{% url 'departments' %}", keywords: 'department structure academic' },
+            { title: 'Export Reports', section: 'Reports', href: "{% url 'export_reports_csv' %}", keywords: 'download csv export reports data' },
+            {% endif %}
+            {% if user.role == 'teacher' or user.role == 'admin' or user.role == 'institution_admin' %}
+            { title: 'Mark Attendance', section: 'Academic', href: "{% url 'mark_attendance' %}", keywords: 'attendance present absent mark class' },
+            { title: 'Create Assignment', section: 'Classroom', href: "{% url 'assignments' %}", keywords: 'assignment classwork task publish' },
+            { title: 'Create Homework', section: 'Classroom', href: "{% url 'homework' %}", keywords: 'homework practice daily work' },
+            { title: 'Post Notice', section: 'Communication', href: "{% url 'notices' %}", keywords: 'announcement notice publish update' },
+            {% endif %}
+            {% if user.role == 'student' %}
+            { title: 'Submit Assignments', section: 'Student', href: "{% url 'assignments' %}", keywords: 'submit assignment classwork due' },
+            { title: 'Check My Attendance', section: 'Student', href: "{% url 'my_attendance' %}", keywords: 'attendance percentage present absent' },
+            { title: 'Check My Grades', section: 'Student', href: "{% url 'grades' %}", keywords: 'marks result grade exam' },
+            {% endif %}
+        ];
+        return actions;
+    }
+
+    function buildItems() {
+        const seen = new Set();
+        const navigationItems = Array.from(document.querySelectorAll('.sidebar-nav .sidebar-link[href]'))
+            .filter(link => !link.classList.contains('logout'))
+            .map(link => {
+                let section = 'Main';
+                let cursor = link.previousElementSibling;
+                while (cursor) {
+                    if (cursor.classList.contains('sidebar-section-label')) {
+                        section = cleanText(cursor.textContent);
+                        break;
+                    }
+                    cursor = cursor.previousElementSibling;
+                }
+                return {
+                    title: cleanText(link.textContent),
+                    section,
+                    href: link.getAttribute('href'),
+                    keywords: ''
+                };
+            })
+        items = quickActionItems().concat(navigationItems)
+            .filter(item => {
+                if (!item.title || !item.href || seen.has(item.href)) return false;
+                seen.add(item.href);
+                return true;
+            });
+    }
+
+    function render(query) {
+        const needle = cleanText(query).toLowerCase();
+        const filtered = items
+            .filter(item => {
+                const haystack = `${item.title} ${item.section} ${item.keywords || ''}`.toLowerCase();
+                return !needle || haystack.includes(needle);
+            })
+            .slice(0, 12);
+
+        if (!filtered.length) {
+            results.innerHTML = '<div class="command-empty">No matching page or action found</div>';
+            return;
+        }
+
+        activeIndex = Math.min(activeIndex, filtered.length - 1);
+        results.innerHTML = filtered.map((item, index) => `
+            <a class="command-result ${index === activeIndex ? 'active' : ''}" href="${item.href}" data-command-index="${index}">
+                <span class="command-result-icon">${escapeHtml(item.title.charAt(0).toUpperCase())}</span>
+                <span>
+                    <strong>${escapeHtml(item.title)}</strong>
+                    <small>${escapeHtml(item.section)}</small>
+                </span>
+            </a>
+        `).join('');
+    }
+
+    function openPalette() {
+        buildItems();
+        activeIndex = 0;
+        input.value = '';
+        render('');
+        palette.classList.add('active');
+        palette.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        requestAnimationFrame(() => input.focus());
+    }
+
+    function closePalette() {
+        palette.classList.remove('active');
+        palette.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    }
+
+    window.openCommandPalette = openPalette;
+    window.closeCommandPalette = closePalette;
+
+    document.addEventListener('click', event => {
+        if (event.target.closest('[data-command-trigger]')) openPalette();
+        if (event.target.closest('[data-command-close]')) closePalette();
+        const result = event.target.closest('.command-result');
+        if (result) closePalette();
+    });
+
+    input.addEventListener('input', () => {
+        activeIndex = 0;
+        render(input.value);
+    });
+
+    input.addEventListener('keydown', event => {
+        const links = Array.from(results.querySelectorAll('.command-result'));
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            activeIndex = Math.min(activeIndex + 1, links.length - 1);
+            render(input.value);
+        } else if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            activeIndex = Math.max(activeIndex - 1, 0);
+            render(input.value);
+        } else if (event.key === 'Enter' && links[activeIndex]) {
+            event.preventDefault();
+            window.location.href = links[activeIndex].href;
+        }
+    });
+
+    document.addEventListener('keydown', event => {
+        const key = event.key.toLowerCase();
+        if ((event.ctrlKey || event.metaKey) && key === 'k') {
+            event.preventDefault();
+            openPalette();
+        } else if (event.key === 'Escape' && palette.classList.contains('active')) {
+            closePalette();
+        }
+    });
+})();
+
+// Floating AI Widget Logic
+function toggleFloatingChat() {
+    const ww = document.getElementById('floatingChatWindow');
+    const isOpen = ww.style.display === 'flex';
+    ww.style.display = isOpen ? 'none' : 'flex';
+    if (!isOpen) {
+        document.getElementById('widgetInput').focus();
+    }
+}
+</script>
+
+<!-- Floating AI Chat Widget -->
+<div id="floatingChatBtn" onclick="toggleFloatingChat()" class="floating-btn" title="Ask EduBot">
+    <div class="floating-btn-pulse"></div>
+    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+</div>
+
+<div id="floatingChatWindow">
+    <div class="fcw-header">
+        <div style="display:flex; align-items:center; gap:0.625rem;">
+            <div class="fcw-avatar">AI</div>
+            <div>
+                <div style="font-weight:800; font-size:0.9375rem;">EduBot</div>
+                <div style="font-size:0.6875rem; color:var(--emerald-500); font-weight:600;">&#9679; Online</div>
+            </div>
+        </div>
+        <button onclick="toggleFloatingChat()" class="fcw-close">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+    </div>
+    <div id="widgetMessages" class="fcw-messages">
+        <div class="fcw-msg-bot">Hi! I'm EduBot. Ask me anything about your studies!</div>
+    </div>
+    <form onsubmit="sendWidgetMessage(event)" class="fcw-form">
+        {% csrf_token %}
+        <input type="text" id="widgetInput" class="fcw-input" placeholder="Ask EduBot..." autocomplete="off" />
+        <button type="submit" class="fcw-send">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+    </form>
+</div>
+
+<style>
+/* ---- Premium Floating AI Chat ---- */
+.floating-btn {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 3.75rem;
+    height: 3.75rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 8px 32px rgba(99,102,241,0.5), 0 2px 8px rgba(0,0,0,0.2);
+    z-index: 1000;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid rgba(255,255,255,0.2);
+    position: fixed;
+}
+.floating-btn:hover {
+    transform: translateY(-4px) scale(1.08);
+    box-shadow: 0 16px 48px rgba(99,102,241,0.6), 0 4px 12px rgba(0,0,0,0.25);
+}
+.floating-btn-pulse {
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    opacity: 0.3;
+    animation: fab-pulse 2.5s ease-in-out infinite;
+    z-index: -1;
+}
+@keyframes fab-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.3; }
+    50% { transform: scale(1.25); opacity: 0; }
+}
+
+#floatingChatWindow {
+    display: none;
+    position: fixed;
+    bottom: 6.5rem;
+    right: 2rem;
+    width: 360px;
+    height: 520px;
+    background: var(--bg-card);
+    border-radius: 1.5rem;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.35), 0 4px 16px rgba(99,102,241,0.15);
+    z-index: 1000;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    animation: fcw-slide-up 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes fcw-slide-up {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.fcw-header {
+    padding: 1rem 1.25rem;
+    background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(168,85,247,0.08));
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.fcw-avatar {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    box-shadow: 0 4px 12px rgba(99,102,241,0.35);
+}
+.fcw-close {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.625rem;
+    border: none;
+    background: rgba(148,163,184,0.1);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+.fcw-close:hover { background: rgba(244,63,94,0.1); color: var(--rose-500); }
+.fcw-messages {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+}
+.fcw-msg-bot {
+    align-self: flex-start;
+    background: rgba(99,102,241,0.08);
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    border-bottom-left-radius: 0.25rem;
+    border: 1px solid rgba(99,102,241,0.12);
+    color: var(--text-primary);
+    max-width: 85%;
+    line-height: 1.5;
+}
+.fcw-msg-user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(168,85,247,0.12));
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    border-bottom-right-radius: 0.25rem;
+    color: var(--text-primary);
+    max-width: 85%;
+    line-height: 1.5;
+    border: 1px solid rgba(99,102,241,0.15);
+}
+.fcw-form {
+    padding: 0.875rem;
+    border-top: 1px solid var(--border-subtle);
+    display: flex;
+    gap: 0.5rem;
+    background: var(--bg-card);
+}
+.fcw-input {
+    flex: 1;
+    padding: 0.625rem 1rem;
+    border-radius: 0.875rem;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-family: var(--font-main);
+    outline: none;
+    transition: all 0.25s ease;
+}
+.fcw-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+}
+.fcw-send {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.875rem;
+    border: none;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 12px rgba(99,102,241,0.35);
+    flex-shrink: 0;
+}
+.fcw-send:hover { transform: scale(1.08); box-shadow: 0 6px 18px rgba(99,102,241,0.5); }
+
+@media (max-width: 480px) {
+    #floatingChatWindow { width: calc(100vw - 2rem); right: 1rem; bottom: 5.5rem; }
+    .floating-btn { bottom: 1.25rem; right: 1.25rem; width: 3.25rem; height: 3.25rem; }
+}
+</style>
+<script>
+async function sendWidgetMessage(e) {
+    e.preventDefault();
+    const input = document.getElementById('widgetInput');
+    const msgContainer = document.getElementById('widgetMessages');
+    const text = input.value.trim();
+    if(!text) return;
+    
+    input.value = '';
+    
+    // User bubble
+    const uDiv = document.createElement('div');
+    uDiv.className = 'fcw-msg-user';
+    uDiv.textContent = text;
+    msgContainer.appendChild(uDiv);
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+    
+    // Typing indicator
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'fcw-msg-bot';
+    typingDiv.innerHTML = '<span style="opacity:0.6">EduBot is typing...</span>';
+    msgContainer.appendChild(typingDiv);
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+    
+    try {
+        const fd = new FormData();
+        fd.append('message', text);
+        const csrfEl = document.querySelector('[name=csrfmiddlewaretoken]');
+        const csrfCookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+        const csrfToken = csrfEl ? csrfEl.value : (csrfCookie ? decodeURIComponent(csrfCookie.split('=')[1]) : '');
+        const res = await fetch('/dashboard/ai/chat/send/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken },
+            body: fd
+        });
+        const data = await res.json();
+        typingDiv.innerHTML = data.success ? data.response.replace(/\n/g, '<br>') : 'Sorry, I had trouble responding. Try again!';
+    } catch(err) {
+        typingDiv.innerHTML = 'Connection error. Please try again.';
+    }
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+}
+</script>
+{% endblock %}
+
+

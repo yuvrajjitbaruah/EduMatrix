@@ -1,0 +1,188 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}Analytics{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div>
+        <h1 class="page-title">Performance Analytics 📊</h1>
+        <p class="page-subtitle">{% if user.role == 'student' %}Your academic performance insights{% elif user.role == 'teacher' %}Class performance overview{% else %}Institution-wide analytics{% endif %}</p>
+    </div>
+
+    {% if user.role == 'student' %}
+    <!-- Student Analytics -->
+    <div class="grid-2">
+        <div class="card chart-container fade-in fade-delay-1">
+            <h3 class="chart-title">Subject-wise Performance</h3>
+            <p class="chart-subtitle">Average marks percentage per subject</p>
+            <canvas id="subjectChart" style="margin-top: 1rem; max-height: 300px;"></canvas>
+        </div>
+
+        <div class="card chart-container fade-in fade-delay-2">
+            <h3 class="chart-title">Grade Distribution</h3>
+            <p class="chart-subtitle">Your grades across all exams</p>
+            <canvas id="gradeChart" style="margin-top: 1rem; max-height: 300px;"></canvas>
+        </div>
+    </div>
+
+    <div class="card chart-container fade-in fade-delay-3">
+        <h3 class="chart-title">Attendance Trend (Last 30 Days)</h3>
+        <p class="chart-subtitle">Green = Present, Red = Absent, Gray = No record</p>
+        <div class="att-heatmap-row" style="margin-top: 1rem;">
+            {% for label in att_labels_json %}{% endfor %}
+        </div>
+        <canvas id="attendanceChart" style="margin-top: 1rem; max-height: 200px;"></canvas>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+    const subjectCtx = document.getElementById('subjectChart').getContext('2d');
+    new Chart(subjectCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ subjects_json|safe }},
+            datasets: [{
+                label: 'Avg Marks %',
+                data: {{ marks_json|safe }},
+                backgroundColor: ['rgba(99,102,241,0.7)', 'rgba(168,85,247,0.7)', 'rgba(6,182,212,0.7)', 'rgba(16,185,129,0.7)', 'rgba(245,158,11,0.7)', 'rgba(244,63,94,0.7)'],
+                borderRadius: 8,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, max: 100, ticks: { color: 'rgb(148,163,184)' }, grid: { color: 'rgba(148,163,184,0.1)' } }, x: { ticks: { color: 'rgb(148,163,184)' }, grid: { display: false } } }
+        }
+    });
+
+    const gradeCtx = document.getElementById('gradeChart').getContext('2d');
+    new Chart(gradeCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ grade_labels_json|safe }},
+            datasets: [{
+                data: {{ grade_dist_json|safe }},
+                backgroundColor: ['#6366f1', '#a855f7', '#06b6d4', '#10b981', '#f59e0b', '#f43f5e'],
+                borderWidth: 0,
+                spacing: 3,
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: 'rgb(148,163,184)', padding: 16 } } } }
+    });
+
+    const attCtx = document.getElementById('attendanceChart').getContext('2d');
+    const attData = {{ att_data_json|safe }};
+    new Chart(attCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ att_labels_json|safe }},
+            datasets: [{
+                data: attData.map(v => v === 1 ? 1 : (v === 0 ? 1 : 0.2)),
+                backgroundColor: attData.map(v => v === 1 ? 'rgba(16,185,129,0.7)' : (v === 0 ? 'rgba(244,63,94,0.7)' : 'rgba(148,163,184,0.15)')),
+                borderRadius: 4,
+                borderSkipped: false,
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { ticks: { color: 'rgb(148,163,184)', font: { size: 10 } }, grid: { display: false } } } }
+    });
+    </script>
+
+    {% elif user.role == 'teacher' %}
+    <!-- Teacher Analytics -->
+    <div class="grid-2">
+        <div class="card chart-container fade-in fade-delay-1">
+            <h3 class="chart-title">Class-wise Attendance</h3>
+            <p class="chart-subtitle">Average attendance rate per class</p>
+            <canvas id="classAttChart" style="margin-top: 1rem; max-height: 300px;"></canvas>
+        </div>
+
+        <div class="card chart-container fade-in fade-delay-2">
+            <h3 class="chart-title">Class-wise Grade Average</h3>
+            <p class="chart-subtitle">Average grade percentage per class</p>
+            <canvas id="classGradeChart" style="margin-top: 1rem; max-height: 300px;"></canvas>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+    new Chart(document.getElementById('classAttChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ class_names_json|safe }},
+            datasets: [{
+                label: 'Attendance %',
+                data: {{ class_att_json|safe }},
+                backgroundColor: 'rgba(99,102,241,0.7)',
+                borderRadius: 8,
+                borderSkipped: false,
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100, ticks: { color: 'rgb(148,163,184)' }, grid: { color: 'rgba(148,163,184,0.1)' } }, x: { ticks: { color: 'rgb(148,163,184)' }, grid: { display: false } } } }
+    });
+
+    new Chart(document.getElementById('classGradeChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ class_names_json|safe }},
+            datasets: [{
+                label: 'Avg Grade %',
+                data: {{ class_grades_json|safe }},
+                backgroundColor: 'rgba(16,185,129,0.7)',
+                borderRadius: 8,
+                borderSkipped: false,
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100, ticks: { color: 'rgb(148,163,184)' }, grid: { color: 'rgba(148,163,184,0.1)' } }, x: { ticks: { color: 'rgb(148,163,184)' }, grid: { display: false } } } }
+    });
+    </script>
+
+    {% else %}
+    <!-- Admin Analytics -->
+    <div class="grid-2">
+        <div class="card chart-container fade-in fade-delay-1">
+            <h3 class="chart-title">Department Attendance vs Grades</h3>
+            <p class="chart-subtitle">Comparing performance across departments</p>
+            <canvas id="deptCompare" style="margin-top: 1rem; max-height: 300px;"></canvas>
+        </div>
+        <div class="card chart-container fade-in fade-delay-2">
+            <h3 class="chart-title">Student Enrollment Trend</h3>
+            <p class="chart-subtitle">New student registrations this year</p>
+            <canvas id="enrollmentChart" style="margin-top: 1rem; max-height: 300px;"></canvas>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+    new Chart(document.getElementById('deptCompare'), {
+        type: 'bar',
+        data: {
+            labels: {{ departments_json|safe }},
+            datasets: [
+                { label: 'Attendance %', data: {{ dept_att_json|safe }}, backgroundColor: 'rgba(99,102,241,0.7)', borderRadius: 6, borderSkipped: false },
+                { label: 'Avg Grade %', data: {{ dept_grades_json|safe }}, backgroundColor: 'rgba(16,185,129,0.7)', borderRadius: 6, borderSkipped: false }
+            ]
+        },
+        options: { responsive: true, plugins: { legend: { labels: { color: 'rgb(148,163,184)' } } }, scales: { y: { beginAtZero: true, max: 100, ticks: { color: 'rgb(148,163,184)' }, grid: { color: 'rgba(148,163,184,0.1)' } }, x: { ticks: { color: 'rgb(148,163,184)' }, grid: { display: false } } } }
+    });
+
+    new Chart(document.getElementById('enrollmentChart'), {
+        type: 'line',
+        data: {
+            labels: {{ enrollment_labels_json|safe }},
+            datasets: [{
+                label: 'New Students',
+                data: {{ enrollment_data_json|safe }},
+                borderColor: '#a855f7',
+                backgroundColor: 'rgba(168,85,247,0.1)',
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#a855f7',
+                pointRadius: 4,
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: 'rgb(148,163,184)' }, grid: { color: 'rgba(148,163,184,0.1)' } }, x: { ticks: { color: 'rgb(148,163,184)' }, grid: { display: false } } } }
+    });
+    </script>
+    {% endif %}
+</div>
+{% endblock %}

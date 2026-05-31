@@ -1,0 +1,57 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}Quiz Results: {{ attempt.quiz.title }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div style="text-align: center; padding: 3rem 1rem;">
+        <div style="font-size: 4rem; margin-bottom: 1.5rem;">🎉</div>
+        <h1 class="page-title" style="margin-bottom: 0.5rem;">Quiz Completed!</h1>
+        <p class="page-subtitle">You've successfully submitted <strong>{{ attempt.quiz.title }}</strong></p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; max-width: 800px; margin: 0 auto;">
+        <!-- Score Card -->
+        <div class="card fade-in" style="text-align: center; padding: 3rem;">
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem; letter-spacing: 0.1em;">Your Score</div>
+            <div style="font-size: 4rem; font-weight: 900; background: linear-gradient(135deg, var(--emerald-400), var(--primary-400)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                {{ attempt.score|floatformat:0 }}
+            </div>
+            <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-muted);">out of {{ attempt.quiz.total_marks }}</div>
+            
+            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-around;">
+                <div>
+                    <div style="font-size: 1.25rem; font-weight: 700;">{{ attempt.quiz.duration_minutes }}m</div>
+                    <div style="font-size: 0.625rem; color: var(--text-muted);">DURATION</div>
+                </div>
+                <div>
+                    <div style="font-size: 1.25rem; font-weight: 700;">{{ attempt.quiz.questions.count }}</div>
+                    <div style="font-size: 0.625rem; color: var(--text-muted);">QUESTIONS</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Summary -->
+        <div class="card fade-in fade-delay-1" style="padding: 2rem;">
+            <h3 style="font-size: 1.125rem; margin-bottom: 1.5rem;">Performance Summary</h3>
+            <div class="space-y-4">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.875rem; color: var(--text-muted);">Submission Time</span>
+                    <span style="font-size: 0.875rem; font-weight: 600;">{{ attempt.end_time|date:"P, j M" }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.875rem; color: var(--text-muted);">Status</span>
+                    <span class="badge badge-success">Completed</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.875rem; color: var(--text-muted);">Percentage</span>
+                    <span style="font-size: 0.875rem; font-weight: 600;">{% widthratio attempt.score attempt.quiz.total_marks 100 %}%</span>
+                </div>
+            </div>
+
+            <div style="margin-top: 3rem;">
+                <a href="{% url 'quiz_list' %}" class="btn btn-primary btn-full">Back to Quizzes</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

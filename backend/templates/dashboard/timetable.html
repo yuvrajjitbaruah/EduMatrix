@@ -1,0 +1,117 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}Class Timetable{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between flex-wrap gap-4">
+        <div>
+            <h1 class="page-title">Class Timetable 📅</h1>
+            <p class="page-subtitle">Your weekly schedule all in one place.</p>
+        </div>
+        {% if user.role == "teacher" or user.role == "admin" %}
+        <button onclick="document.getElementById('addScheduleModal').style.display='block'" class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem;">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Add Schedule
+        </button>
+        {% endif %}
+    </div>
+
+    {% if user.role == "teacher" or user.role == "admin" %}
+    <div id="addScheduleModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: none; align-items: center; justify-content: center; ">
+        <div class="card" style="width: 100%; max-width: 500px; padding: 2rem; position: relative;">
+            <button onclick="document.getElementById('addScheduleModal').style.display='none'" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-muted); cursor: pointer;">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+            <h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; color: var(--text-main);">Add Timetable Schedule</h2>
+            <form method="post" action="{% url 'timetable' %}">
+                {% csrf_token %}
+                <div class="space-y-4">
+                    <div class="form-group">
+                        <label>Select Class</label>
+                        <select name="class_id" class="form-control" required style="background: var(--surface-bg); color: var(--text-main); border: 1px solid var(--border-light);">
+                            {% for cls in teacher_classes %}
+                            <option value="{{ cls.id }}">{{ cls.name }} ({{ cls.subject }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Day of Week</label>
+                        <select name="day_of_week" class="form-control" required style="background: var(--surface-bg); color: var(--text-main); border: 1px solid var(--border-light);">
+                            {% for val, display in days %}
+                            <option value="{{ val }}">{{ display }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Start Time</label>
+                            <input type="time" name="start_time" class="form-control" required style="background: var(--surface-bg); color: var(--text-main); border: 1px solid var(--border-light);">
+                        </div>
+                        <div class="form-group">
+                            <label>End Time</label>
+                            <input type="time" name="end_time" class="form-control" required style="background: var(--surface-bg); color: var(--text-main); border: 1px solid var(--border-light);">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Room Number</label>
+                        <input type="text" name="room_number" class="form-control" required style="background: var(--surface-bg); color: var(--text-main); border: 1px solid var(--border-light);" placeholder="e.g., Room 101, Lab B">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Save Schedule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card" style="padding: 0; overflow: hidden; border: 1px solid var(--border-light);">
+        <div class="table-wrap">
+            <table class="timetable">
+                <thead>
+                    <tr>
+                        <th style="width: 15%; text-align: left; padding: 1rem 1.5rem; background: var(--surface-light); border-bottom: 1px solid var(--border-subtle);">Day</th>
+                        <th style="text-align: left; padding: 1rem 1.5rem; background: var(--surface-light); border-bottom: 1px solid var(--border-subtle);">Classes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for day_key, day_data in timetable.items %}
+                    <tr {% if day_key == current_day %}style="background: rgba(59, 130, 246, 0.05);"{% endif %}>
+                        <td style="padding: 1.5rem; border-bottom: 1px solid var(--border-subtle); border-right: 1px solid var(--border-subtle); font-weight: 700; color: {% if day_key == current_day %}var(--blue-400){% else %}var(--text-main){% endif %}; vertical-align: top;">
+                            {{ day_data.name }}
+                            {% if day_key == current_day %}
+                            <div style="font-size: 0.6875rem; color: var(--blue-500); margin-top: 0.25rem;">TODAY</div>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1.5rem; border-bottom: 1px solid var(--border-subtle);">
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                {% for cls in day_data.classes %}
+                                <div style="min-width: 14rem; padding: 1rem; border-radius: 0.75rem; background: var(--surface-bg); border: 1px solid var(--border-subtle); position: relative; overflow: hidden;">
+                                    <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--emerald-500);"></div>
+                                    <div style="font-size: 0.75rem; font-weight: 700; color: var(--emerald-400); margin-bottom: 0.25rem;">
+                                        {{ cls.start_time|time:"H:i" }} - {{ cls.end_time|time:"H:i" }}
+                                    </div>
+                                    <div style="font-weight: 700; color: var(--text-main); margin-bottom: 0.125rem;">{{ cls.course_class.name }}</div>
+                                    <div style="font-size: 0.8125rem; color: var(--text-muted); margin-bottom: 0.5rem;">{{ cls.course_class.subject }}</div>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
+                                        <div style="display: flex; align-items: center; gap: 0.25rem;">
+                                            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                            {{ cls.room_number }}
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 0.25rem;">
+                                            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                            {{ cls.course_class.teacher.get_full_name|default:cls.course_class.teacher.username }}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div style="color: var(--text-muted); font-size: 0.875rem; font-style: italic; padding: 0.5rem 0;">No classes scheduled</div>
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

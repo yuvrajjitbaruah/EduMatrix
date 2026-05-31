@@ -1,0 +1,384 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Power Center{% endblock %}
+
+{% block content %}
+<div class="space-y-6 power-center">
+    <section class="dashboard-hero power-hero">
+        <div>
+            <span class="section-kicker">Power Center</span>
+            <h1 class="page-title">Smart Command Center</h1>
+            <p class="page-subtitle">
+                A live, role-aware workspace for {{ role_label }}{% if institution_name %} at {{ institution_name }}{% endif %}. See priority work, risks, upcoming dates, and the fastest actions from one place.
+            </p>
+        </div>
+        <div class="dashboard-hero-actions">
+            <a href="{% url 'dashboard_home' %}" class="btn btn-secondary">Dashboard</a>
+            <a href="{% url 'reports' %}" class="btn btn-primary">Reports</a>
+        </div>
+    </section>
+
+    <section class="stats-grid power-stat-grid">
+        {% for card in signal_cards %}
+        <article class="card stat-card power-stat-card tone-{{ card.tone }} fade-in">
+            <div class="stat-card-header">
+                <span class="stat-card-label">{{ card.label }}</span>
+                <span class="power-signal-dot"></span>
+            </div>
+            <div class="stat-card-value">{{ card.value }}</div>
+            <div class="stat-card-change text-muted">{{ card.detail }}</div>
+        </article>
+        {% endfor %}
+    </section>
+
+    <section class="dashboard-duo power-duo power-intelligence-duo">
+        <div class="card chart-container power-panel">
+            <div class="chart-header">
+                <div>
+                    <h3 class="chart-title">Smart Briefing</h3>
+                    <p class="chart-subtitle">A quick readout of what matters most in your current workspace.</p>
+                </div>
+            </div>
+            <div class="power-briefing-grid">
+                {% for item in power_briefing %}
+                <a href="{{ item.href }}" class="power-briefing-card tone-{{ item.tone }}">
+                    <span>{{ item.label }}</span>
+                    <strong>{{ item.value }}</strong>
+                    <p>{{ item.detail }}</p>
+                </a>
+                {% empty %}
+                <p class="text-muted">No briefing signals are available yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="card chart-container power-panel">
+            <div class="chart-header">
+                <div>
+                    <h3 class="chart-title">Action Playbook</h3>
+                    <p class="chart-subtitle">Suggested next moves you can open now or save into Planner.</p>
+                </div>
+            </div>
+            <div class="power-playbook-list">
+                {% for item in power_playbook %}
+                <article class="power-playbook-card priority-{{ item.priority }}">
+                    <div>
+                        <span class="integration-section">{{ item.priority }} priority</span>
+                        <h4>{{ item.label }}</h4>
+                        <p>{{ item.detail }}</p>
+                    </div>
+                    <div class="power-playbook-actions">
+                        <a href="{{ item.href }}" class="btn btn-secondary btn-sm">Open</a>
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="capture_power_task">
+                            <input type="hidden" name="title" value="{{ item.label }}">
+                            <input type="hidden" name="description" value="{{ item.detail }}">
+                            <input type="hidden" name="priority" value="{{ item.priority }}">
+                            <input type="hidden" name="due_date" value="{{ today|date:'Y-m-d' }}">
+                            <button type="submit" class="btn btn-primary btn-sm">Save to Planner</button>
+                        </form>
+                    </div>
+                    <span class="metric-pill">{{ item.value }}</span>
+                </article>
+                {% empty %}
+                <p class="text-muted">No suggested actions are available right now.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section id="automation-studio" class="card chart-container power-panel power-automation-panel">
+        <div class="chart-header power-automation-header">
+            <div>
+                <h3 class="chart-title">Automation Studio</h3>
+                <p class="chart-subtitle">Role-aware sweeps that turn live platform signals into Planner actions.</p>
+            </div>
+            <div class="power-automation-controls">
+                <span class="metric-pill">{{ automation_summary.ready }}/{{ automation_summary.total }} ready</span>
+                <span class="metric-pill">{{ automation_summary.high }} high priority</span>
+                <form method="post" class="power-automation-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="run_power_automation_sweep">
+                    {% for item in automation_deck %}
+                        {% if item.enabled %}
+                        <input type="hidden" name="automation_title" value="{{ item.label }}">
+                        <input type="hidden" name="automation_description" value="{{ item.detail }}">
+                        <input type="hidden" name="automation_priority" value="{{ item.priority }}">
+                        <input type="hidden" name="automation_due_date" value="{{ item.due_date|date:'Y-m-d' }}">
+                        {% endif %}
+                    {% endfor %}
+                    <button type="submit" class="btn btn-primary btn-sm" {% if not automation_summary.ready %}disabled{% endif %}>Run Sweep</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="power-automation-grid">
+            {% for item in automation_deck %}
+            <article class="power-automation-card priority-{{ item.priority }}{% if not item.enabled %} is-muted{% endif %}">
+                <div class="power-automation-topline">
+                    <span class="integration-section">{{ item.cadence }}</span>
+                    <span class="metric-pill">{% if item.enabled %}Ready{% else %}Watching{% endif %}</span>
+                </div>
+                <h4>{{ item.label }}</h4>
+                <p>{{ item.detail }}</p>
+                <div class="power-automation-footer">
+                    <strong>{{ item.value }}</strong>
+                    <a href="{{ item.href }}" class="btn btn-secondary btn-sm">Open</a>
+                </div>
+            </article>
+            {% empty %}
+            <p class="text-muted">No automation rules are available for this workspace yet.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section id="workflow-recipes" class="card chart-container power-panel power-recipe-panel">
+        <div class="chart-header">
+            <div>
+                <h3 class="chart-title">Workflow Recipes</h3>
+                <p class="chart-subtitle">One-click bundles for the bigger weekly routines across your role.</p>
+            </div>
+        </div>
+        <div class="power-recipe-grid">
+            {% for recipe in workflow_recipes %}
+            <article class="power-recipe-card">
+                <div class="power-recipe-header">
+                    <span class="integration-section">{{ recipe.badge }}</span>
+                    <a href="{{ recipe.href }}" class="btn btn-secondary btn-sm">Open</a>
+                </div>
+                <h4>{{ recipe.label }}</h4>
+                <p>{{ recipe.detail }}</p>
+                <ul class="power-recipe-task-list">
+                    {% for task in recipe.tasks %}
+                    <li>
+                        <strong>{{ task.title }}</strong>
+                        <span>{{ task.priority }} priority</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <form method="post" class="power-recipe-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="run_power_recipe_bundle">
+                    {% for task in recipe.tasks %}
+                    <input type="hidden" name="automation_title" value="{{ task.title }}">
+                    <input type="hidden" name="automation_description" value="{{ task.description }}">
+                    <input type="hidden" name="automation_priority" value="{{ task.priority }}">
+                    <input type="hidden" name="automation_due_date" value="{{ task.due_date|date:'Y-m-d' }}">
+                    {% endfor %}
+                    <button type="submit" class="btn btn-primary btn-sm">Save Recipe to Planner</button>
+                </form>
+            </article>
+            {% empty %}
+            <p class="text-muted">No workflow recipes are available for this role yet.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    {% if can_manage_requests %}
+    <section id="open-requests" class="card chart-container power-panel power-request-panel">
+        <div class="chart-header">
+            <div>
+                <h3 class="chart-title">Open Requests</h3>
+                <p class="chart-subtitle">Review who contacted EduMatrix, inspect their institution details, and move each request through onboarding.</p>
+            </div>
+            <span class="metric-pill">{{ open_requests|length }} visible</span>
+        </div>
+
+        {% if open_requests %}
+        <div class="power-request-grid">
+            {% for lead in open_requests %}
+            <article class="power-request-card">
+                <div class="power-request-head">
+                    <div>
+                        <span class="integration-section">{{ lead.status_label }}</span>
+                        <h4>{{ lead.institute_name }}</h4>
+                    </div>
+                    <span class="metric-pill">{{ lead.verification_label }}</span>
+                </div>
+
+                <dl class="power-request-meta">
+                    <div>
+                        <dt>Contact</dt>
+                        <dd>{{ lead.contact_name }}</dd>
+                    </div>
+                    <div>
+                        <dt>Email</dt>
+                        <dd><a href="mailto:{{ lead.email }}">{{ lead.email }}</a></dd>
+                    </div>
+                    <div>
+                        <dt>Phone</dt>
+                        <dd>{{ lead.phone }}</dd>
+                    </div>
+                    <div>
+                        <dt>Domain</dt>
+                        <dd>{{ lead.domain }}</dd>
+                    </div>
+                    <div>
+                        <dt>Students</dt>
+                        <dd>{{ lead.student_count }}</dd>
+                    </div>
+                    <div>
+                        <dt>Institution</dt>
+                        <dd>{{ lead.linked_institution }}</dd>
+                    </div>
+                </dl>
+
+                <p class="power-request-message">{{ lead.message }}</p>
+
+                <div class="power-request-footer">
+                    <span>Submitted {{ lead.created_at|date:"d M Y, h:i A" }}</span>
+                    <span>{{ lead.age_days }} day{{ lead.age_days|pluralize }} open</span>
+                </div>
+
+                <div class="power-request-actions">
+                    <a href="mailto:{{ lead.email }}?subject=EduMatrix onboarding request" class="btn btn-secondary btn-sm">Email Contact</a>
+
+                    <form method="post" class="power-request-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_inquiry_status">
+                        <input type="hidden" name="inquiry_id" value="{{ lead.id }}">
+                        <select name="status" class="form-input power-request-select" aria-label="Update request status">
+                            <option value="new" {% if lead.status == 'new' %}selected{% endif %}>New</option>
+                            <option value="contacted" {% if lead.status == 'contacted' %}selected{% endif %}>Contacted</option>
+                            <option value="onboarded" {% if lead.status == 'onboarded' %}selected{% endif %}>Onboarded</option>
+                            <option value="closed" {% if lead.status == 'closed' %}selected{% endif %}>Closed</option>
+                        </select>
+                        <button type="submit" class="btn btn-secondary btn-sm">Save Status</button>
+                    </form>
+
+                    <form method="post" class="power-request-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_inquiry_verification">
+                        <input type="hidden" name="inquiry_id" value="{{ lead.id }}">
+                        <select name="verification_status" class="form-input power-request-select" aria-label="Update institution verification">
+                            <option value="pending" {% if lead.verification_status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="verified" {% if lead.verification_status == 'verified' %}selected{% endif %}>Verified</option>
+                            <option value="rejected" {% if lead.verification_status == 'rejected' %}selected{% endif %}>Rejected</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm">Save Verification</button>
+                    </form>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="power-request-empty">
+            <strong>No open onboarding requests.</strong>
+            <p>New institution inquiries submitted from the public page will appear here with contact details and verification controls.</p>
+        </div>
+        {% endif %}
+    </section>
+    {% endif %}
+
+    <section class="dashboard-duo power-duo">
+        <div class="card chart-container power-panel">
+            <div class="chart-header">
+                <div>
+                    <h3 class="chart-title">Priority Work</h3>
+                    <p class="chart-subtitle">The next actions that deserve attention first.</p>
+                </div>
+            </div>
+            <div class="list-stack">
+                {% for item in workload_items %}
+                <a href="{{ item.href }}" class="list-row list-row-link power-row">
+                    <div>
+                        <strong>{{ item.label }}</strong>
+                        <p>{{ item.detail }}</p>
+                    </div>
+                    <span class="metric-pill">{{ item.value }}</span>
+                </a>
+                {% empty %}
+                <p class="text-muted">No priority work is currently available.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="card chart-container power-panel">
+            <div class="chart-header">
+                <div>
+                    <h3 class="chart-title">Risk Radar</h3>
+                    <p class="chart-subtitle">Signals that may need intervention before they become bigger issues.</p>
+                </div>
+            </div>
+            <div class="list-stack">
+                {% for item in risk_items %}
+                <div class="list-row power-risk-row tone-{{ item.tone }}">
+                    <div>
+                        <strong>{{ item.label }}</strong>
+                        <p>{{ item.detail }}</p>
+                    </div>
+                    <span class="metric-pill">{{ item.value }}</span>
+                </div>
+                {% empty %}
+                <p class="text-muted">No risk signals found from the current data.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="dashboard-duo power-duo">
+        <div class="card chart-container power-panel">
+            <div class="chart-header">
+                <div>
+                    <h3 class="chart-title">Upcoming Timeline</h3>
+                    <p class="chart-subtitle">Classwork, notices, and events coming into view.</p>
+                </div>
+            </div>
+            <div class="power-timeline">
+                {% for item in upcoming_items %}
+                <a href="{{ item.href }}" class="power-timeline-item">
+                    <span>{{ item.value }}</span>
+                    <div>
+                        <strong>{{ item.label }}</strong>
+                        <p>{{ item.detail }}</p>
+                    </div>
+                </a>
+                {% empty %}
+                <p class="text-muted">No upcoming items found yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="card chart-container power-panel">
+            <div class="chart-header">
+                <div>
+                    <h3 class="chart-title">Recent Activity</h3>
+                    <p class="chart-subtitle">Fresh movement from the current workspace.</p>
+                </div>
+            </div>
+            <div class="list-stack">
+                {% for activity in recent_activity %}
+                <div class="list-row">
+                    <div>
+                        <strong>{{ activity.description }}</strong>
+                        <p>{{ activity.user.get_full_name|default:activity.user.username }}</p>
+                    </div>
+                    <span class="metric-pill">{{ activity.created_at|date:"d M" }}</span>
+                </div>
+                {% empty %}
+                <p class="text-muted">No recent activity recorded yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="card chart-container power-panel">
+        <div class="chart-header">
+            <div>
+                <h3 class="chart-title">Fast Actions</h3>
+                <p class="chart-subtitle">Jump to the most useful modules for your role.</p>
+            </div>
+        </div>
+        <div class="power-link-grid">
+            {% for link in quick_links %}
+            <a href="{{ link.href }}" class="power-action-card">
+                <span>{{ forloop.counter|stringformat:"02d" }}</span>
+                <strong>{{ link.label }}</strong>
+                <p>{{ link.detail }}</p>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

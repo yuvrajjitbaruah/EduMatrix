@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-M73994EVCY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-M73994EVCY');
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}EduMatrix{% endblock %} &mdash; Where Education Meets Intelligence</title>
+    <meta name="description" content="EduMatrix is a premium student management platform for schools, colleges, universities, teachers, students, and institution admins." />
+    <meta name="theme-color" content="#061012" />
+    <meta property="og:title" content="EduMatrix - Where Education Meets Intelligence" />
+    <meta property="og:description" content="Premium student management, classroom, analytics, communication, and AI learning platform." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://edumatrix.tech/" />
+    <meta property="og:image" content="https://edumatrix.tech/static/img/edumatrix-icon-512.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="EduMatrix" />
+    <meta name="application-name" content="EduMatrix" />
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=edumatrix-workflow-recipes-2026-05-02" />
+    <link rel="manifest" href="{% static 'manifest.webmanifest' %}" />
+    <link rel="icon" href="{% static 'img/edumatrix-icon-192.png' %}" />
+    <link rel="apple-touch-icon" href="{% static 'img/edumatrix-icon-192.png' %}" />
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    {% block body %}{% endblock %}
+
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+            navigator.serviceWorker.register('/service-worker.js').catch(function () {});
+        });
+    }
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

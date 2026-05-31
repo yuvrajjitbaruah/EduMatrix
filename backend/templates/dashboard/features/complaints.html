@@ -1,0 +1,61 @@
+{% extends 'dashboard/layout.html' %}
+{% block title %}Complaints | EduMatrix{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1 class="page-title">📢 Complaints & Grievances</h1><p class="page-subtitle">File and track complaints — {{ total }} total</p></div></div>
+
+<div class="stats-grid stats-grid-3">
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#ef4444,#dc2626);">🔴</div><div class="stat-info"><div class="stat-value">{{ open_count }}</div><div class="stat-label">Open</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);">🟡</div><div class="stat-info"><div class="stat-value">{{ in_progress_count }}</div><div class="stat-label">In Progress</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#059669);">🟢</div><div class="stat-info"><div class="stat-value">{{ resolved_count }}</div><div class="stat-label">Resolved</div></div></div>
+</div>
+
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">File New Complaint</h3></div>
+    <div class="card-body">
+        <form method="post" class="form-grid form-grid-2">
+            {% csrf_token %}<input type="hidden" name="action" value="create">
+            <div class="form-group"><label class="form-label">Subject</label><input type="text" name="subject" class="form-input" required></div>
+            <div class="form-group"><label class="form-label">Category</label><select name="category" class="form-input"><option value="academic">Academic</option><option value="infrastructure">Infrastructure</option><option value="hostel">Hostel</option><option value="transport">Transport</option><option value="canteen">Canteen</option><option value="harassment">Harassment</option><option value="other">Other</option></select></div>
+            <div class="form-group"><label class="form-label">Priority</label><select name="priority" class="form-input"><option value="low">🟢 Low</option><option value="medium" selected>🟡 Medium</option><option value="high">🟠 High</option><option value="urgent">🔴 Urgent</option></select></div>
+            <div class="form-group" style="grid-column:span 1;"></div>
+            <div class="form-group" style="grid-column:span 2;"><label class="form-label">Description</label><textarea name="description" class="form-input" rows="3" required placeholder="Describe your complaint in detail..."></textarea></div>
+            <div class="form-group" style="grid-column:span 2;"><button type="submit" class="btn btn-primary">📢 Submit Complaint</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h3 class="card-title">Complaints</h3></div>
+    <div class="card-body">
+        {% for c in complaints %}
+        <div class="list-item" style="border-left:4px solid {% if c.status == 'resolved' %}var(--emerald-500){% elif c.status == 'in_progress' %}#f59e0b{% elif c.priority == 'urgent' %}var(--rose-500){% else %}var(--primary-500){% endif %};">
+            <div class="list-item-content" style="flex:1;">
+                <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-bottom:.25rem;">
+                    <strong style="color:var(--text-primary);">{{ c.subject }}</strong>
+                    <span class="badge {% if c.priority == 'urgent' %}badge-danger{% elif c.priority == 'high' %}badge-warning{% else %}badge-info{% endif %}">{{ c.get_priority_display }}</span>
+                    <span class="badge badge-ghost">{{ c.get_category_display }}</span>
+                    <span class="badge {% if c.status == 'resolved' %}badge-success{% elif c.status == 'in_progress' %}badge-warning{% else %}badge-danger{% endif %}">{{ c.get_status_display }}</span>
+                </div>
+                <p style="color:var(--text-secondary);font-size:.9rem;">{{ c.description|truncatewords:30 }}</p>
+                {% if c.resolution %}<p style="font-size:.85rem;color:var(--emerald-400);margin-top:.25rem;">✅ Resolution: {{ c.resolution }}</p>{% endif %}
+                <span style="font-size:.8rem;color:var(--text-muted);">Filed by {{ c.filed_by.get_full_name|default:c.filed_by.username }} • {{ c.filed_date }}</span>
+            </div>
+            {% if user.role in 'admin teacher' and c.status != 'resolved' %}
+            <form method="post" style="margin:0;display:flex;flex-direction:column;gap:.25rem;">
+                {% csrf_token %}<input type="hidden" name="action" value="update_status"><input type="hidden" name="complaint_id" value="{{ c.id }}">
+                <select name="status" class="form-input" style="margin:0;font-size:.8rem;padding:.25rem;">
+                    <option value="open" {% if c.status == 'open' %}selected{% endif %}>Open</option>
+                    <option value="in_progress" {% if c.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                    <option value="resolved">Resolved</option>
+                </select>
+                <input type="text" name="resolution" class="form-input" placeholder="Resolution..." style="margin:0;font-size:.8rem;padding:.25rem;">
+                <button type="submit" class="btn btn-ghost btn-sm">Update</button>
+            </form>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="empty-state"><div class="empty-state-icon">📢</div><h3>No complaints filed</h3></div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

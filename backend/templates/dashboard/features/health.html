@@ -1,0 +1,116 @@
+{% extends 'dashboard/layout.html' %}
+{% block title %}Health Records | EduMatrix{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Health Records</h1>
+        <p class="page-subtitle">Medical information and emergency contacts</p>
+    </div>
+</div>
+
+{% if user.role == 'student' %}
+<div class="card">
+    <div class="card-header"><h3 class="card-title">My Health Record</h3></div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save">
+            <div class="form-grid form-grid-2">
+                <div class="form-group">
+                    <label class="form-label">Blood Group</label>
+                    <select name="blood_group" class="form-input">
+                        <option value="">Select...</option>
+                        <option value="A+" {% if record.blood_group == 'A+' %}selected{% endif %}>A+</option>
+                        <option value="A-" {% if record.blood_group == 'A-' %}selected{% endif %}>A-</option>
+                        <option value="B+" {% if record.blood_group == 'B+' %}selected{% endif %}>B+</option>
+                        <option value="B-" {% if record.blood_group == 'B-' %}selected{% endif %}>B-</option>
+                        <option value="AB+" {% if record.blood_group == 'AB+' %}selected{% endif %}>AB+</option>
+                        <option value="AB-" {% if record.blood_group == 'AB-' %}selected{% endif %}>AB-</option>
+                        <option value="O+" {% if record.blood_group == 'O+' %}selected{% endif %}>O+</option>
+                        <option value="O-" {% if record.blood_group == 'O-' %}selected{% endif %}>O-</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Insurance Info</label>
+                    <input type="text" name="insurance_info" class="form-input" value="{{ record.insurance_info|default:'' }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Allergies</label>
+                    <textarea name="allergies" class="form-input" rows="2" placeholder="e.g. Peanuts, Penicillin...">{{ record.allergies|default:'' }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Medical Conditions</label>
+                    <textarea name="medical_conditions" class="form-input" rows="2" placeholder="e.g. Asthma, Diabetes...">{{ record.medical_conditions|default:'' }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Current Medications</label>
+                    <textarea name="medications" class="form-input" rows="2">{{ record.medications|default:'' }}</textarea>
+                </div>
+                <div class="form-group" style="border-left: 3px solid var(--rose-500); padding-left: 1rem;">
+                    <label class="form-label" style="color: var(--rose-400);">Emergency Contact</label>
+                    <input type="text" name="emergency_contact_name" class="form-input" placeholder="Contact Name" value="{{ record.emergency_contact_name|default:'' }}" style="margin-bottom: .5rem;">
+                    <input type="text" name="emergency_contact_phone" class="form-input" placeholder="Contact Phone" value="{{ record.emergency_contact_phone|default:'' }}">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Save Health Record</button>
+        </form>
+    </div>
+</div>
+{% else %}
+{% if user.role == 'admin' %}
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">Create Health Record</h3></div>
+    <div class="card-body">
+        <form method="post" class="form-grid form-grid-2">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save">
+            <div class="form-group">
+                <label class="form-label">Student</label>
+                <select name="student_id" class="form-input" required>
+                    {% for s in students %}
+                    <option value="{{ s.id }}">{{ s.get_full_name|default:s.username }} ({{ s.roll_no|default:'-' }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Blood Group</label>
+                <select name="blood_group" class="form-input">
+                    <option value="A+">A+</option><option value="A-">A-</option>
+                    <option value="B+">B+</option><option value="B-">B-</option>
+                    <option value="AB+">AB+</option><option value="AB-">AB-</option>
+                    <option value="O+">O+</option><option value="O-">O-</option>
+                </select>
+            </div>
+            <div class="form-group"><label class="form-label">Allergies</label><input type="text" name="allergies" class="form-input"></div>
+            <div class="form-group"><label class="form-label">Medical Conditions</label><input type="text" name="medical_conditions" class="form-input"></div>
+            <div class="form-group"><label class="form-label">Emergency Contact Name</label><input type="text" name="emergency_contact_name" class="form-input"></div>
+            <div class="form-group"><label class="form-label">Emergency Contact Phone</label><input type="text" name="emergency_contact_phone" class="form-input"></div>
+            <div class="form-group" style="grid-column: span 2;"><button type="submit" class="btn btn-primary">Save Record</button></div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header"><h3 class="card-title">All Health Records</h3></div>
+    <div class="card-body" style="overflow-x:auto;">
+        <table class="data-table">
+            <thead><tr><th>Student</th><th>Blood Group</th><th>Allergies</th><th>Conditions</th><th>Emergency Contact</th></tr></thead>
+            <tbody>
+                {% for r in records %}
+                <tr>
+                    <td><strong style="color:var(--text-primary);">{{ r.student.get_full_name|default:r.student.username }}</strong></td>
+                    <td><span class="badge badge-danger" style="font-weight:700;">{{ r.blood_group|default:'-' }}</span></td>
+                    <td style="color:var(--text-secondary);font-size:.85rem;">{{ r.allergies|default:'None' }}</td>
+                    <td style="color:var(--text-secondary);font-size:.85rem;">{{ r.medical_conditions|default:'None' }}</td>
+                    <td style="color:var(--text-secondary);font-size:.85rem;">{{ r.emergency_contact_name|default:'-' }}<br>{{ r.emergency_contact_phone|default:'' }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">No health records found</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

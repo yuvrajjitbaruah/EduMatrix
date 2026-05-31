@@ -1,0 +1,90 @@
+{% extends 'dashboard/layout.html' %}
+{% block title %}Photo Gallery | EduMatrix{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1 class="page-title">📸 Photo Gallery</h1><p class="page-subtitle">Campus photo albums • {{ total_photos }} photos</p></div></div>
+
+{% if user.role in 'admin teacher' %}
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">Create Album</h3></div>
+    <div class="card-body">
+        <form method="post" style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:flex-end;">
+            {% csrf_token %}<input type="hidden" name="action" value="create_album">
+            <div class="form-group" style="flex:1;min-width:200px;"><label class="form-label">Album Title</label><input type="text" name="title" class="form-input" required></div>
+            <div class="form-group" style="flex:1;min-width:200px;"><label class="form-label">Description</label><input type="text" name="description" class="form-input"></div>
+            <button type="submit" class="btn btn-primary" style="height:42px;">📸 Create Album</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% if current_album %}
+<!-- Album Detail View -->
+<div class="card mb-6">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 class="card-title">📁 {{ current_album.title }}</h3>
+        <a href="{% url 'gallery' %}" class="btn btn-ghost btn-sm">← Back to Albums</a>
+    </div>
+    <div class="card-body">
+        {% if current_album.description %}<p style="color:var(--text-muted);margin-bottom:1rem;">{{ current_album.description }}</p>{% endif %}
+
+        {% if user.role in 'admin teacher' %}
+        <form method="post" enctype="multipart/form-data" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1.5rem;padding:1rem;background:var(--bg-body);border-radius:var(--radius-md);">
+            {% csrf_token %}<input type="hidden" name="action" value="upload_photo"><input type="hidden" name="album_id" value="{{ current_album.id }}">
+            <div class="form-group" style="flex:1;min-width:200px;"><label class="form-label">Photo</label><input type="file" name="photo" class="form-input" accept="image/*" required></div>
+            <div class="form-group" style="flex:1;min-width:200px;"><label class="form-label">Caption</label><input type="text" name="caption" class="form-input" placeholder="Optional caption..."></div>
+            <button type="submit" class="btn btn-primary" style="height:42px;">Upload</button>
+        </form>
+        {% endif %}
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;">
+            {% for photo in current_album.photos.all %}
+            <div style="position:relative;border-radius:var(--radius-md);overflow:hidden;background:var(--bg-body);border:1px solid var(--border-subtle);">
+                <div style="aspect-ratio:1;overflow:hidden;">
+                    <img src="{{ photo.image.url }}" alt="{{ photo.caption }}" style="width:100%;height:100%;object-fit:cover;transition:transform .3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                </div>
+                {% if photo.caption %}<p style="padding:.5rem;font-size:.8rem;color:var(--text-muted);text-align:center;">{{ photo.caption }}</p>{% endif %}
+                {% if user.role in 'admin teacher' %}
+                <form method="post" style="position:absolute;top:.25rem;right:.25rem;margin:0;">{% csrf_token %}<input type="hidden" name="action" value="delete_photo"><input type="hidden" name="photo_id" value="{{ photo.id }}"><button type="submit" class="btn btn-ghost btn-sm" style="background:rgba(0,0,0,0.5);padding:2px 6px;" onclick="return confirm('Delete photo?')">🗑️</button></form>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="empty-state" style="grid-column:1/-1;"><div class="empty-state-icon">📷</div><h3>Album is empty</h3><p>Upload the first photo!</p></div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- Albums Grid -->
+<div class="card">
+    <div class="card-header"><h3 class="card-title">Albums</h3></div>
+    <div class="card-body">
+        <div class="grid-responsive">
+            {% for album in albums %}
+            <a href="?album={{ album.id }}" style="text-decoration:none;">
+                <div class="feature-card" style="cursor:pointer;transition:transform .2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+                    <div style="aspect-ratio:16/10;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(168,85,247,0.1));border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;margin-bottom:.75rem;overflow:hidden;">
+                        {% with first_photo=album.photos.first %}
+                        {% if first_photo %}
+                        <img src="{{ first_photo.image.url }}" style="width:100%;height:100%;object-fit:cover;">
+                        {% else %}
+                        <span style="font-size:3rem;">📸</span>
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+                    <h4 style="color:var(--text-primary);font-weight:600;">{{ album.title }}</h4>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.25rem;">
+                        <span style="font-size:.85rem;color:var(--text-muted);">{{ album.photo_count }} photos</span>
+                        <span style="font-size:.8rem;color:var(--text-muted);">{{ album.created_at|date:"d M Y" }}</span>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <div class="empty-state" style="grid-column:1/-1;"><div class="empty-state-icon">📸</div><h3>No albums yet</h3></div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+

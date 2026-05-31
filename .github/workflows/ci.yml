@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests (SQLite for CI)
+        working-directory: backend
+        env:
+          DJANGO_SECRET_KEY: ci-test-secret-key-not-for-production
+          DJANGO_DEBUG: "True"
+          DJANGO_TEST_DATABASE_BACKEND: sqlite
+          DJANGO_TEST_SQLITE_NAME: ":memory:"
+        run: |
+          python manage.py test academics dashboard accounts attendance quizzes --verbosity 2
+
+      - name: Check for Django deploy issues
+        working-directory: backend
+        env:
+          DJANGO_SECRET_KEY: ci-test-secret-key-not-for-production
+          DJANGO_DEBUG: "False"
+          DJANGO_TEST_DATABASE_BACKEND: sqlite
+        run: |
+          python manage.py check

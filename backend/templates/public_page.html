@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page.title }}{% endblock %}
+
+{% block body %}
+<main class="public-landing public-page">
+    <nav class="landing-nav">
+        <a class="landing-brand" href="{% url 'home' %}">
+            <img src="{% static 'img/edumatrix-logo-transparent.png' %}" alt="EduMatrix" class="brand-logo-img">
+        </a>
+        <div class="landing-nav-links">
+            <a href="{% url 'about' %}">About</a>
+            <a href="{% url 'contact' %}">Contact Us</a>
+            <a href="{% url 'terms' %}">Terms</a>
+            <a href="{% url 'privacy' %}">Privacy</a>
+        </div>
+        <div class="landing-nav-actions">
+            {% if user.is_authenticated %}
+                <a class="btn btn-secondary" href="{% url 'dashboard_home' %}">Dashboard</a>
+            {% else %}
+                <a class="btn btn-secondary" href="{% url 'login' %}">Sign In</a>
+                <a class="btn btn-primary" href="{% url 'home' %}#connect">Request Access</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <section class="public-page-hero">
+        <span class="landing-section-label">{{ page.kicker }}</span>
+        <h1>{{ page.title }}</h1>
+        <p>{{ page.lede }}</p>
+    </section>
+
+    <section class="{% if page.show_form %}landing-contact{% else %}public-page-content{% endif %}">
+        <div class="public-page-stack">
+        <div class="public-page-sections">
+            {% for section in page.sections %}
+            <article class="public-info-card">
+                <h2>{{ section.heading }}</h2>
+                <ul>
+                    {% for item in section.items %}
+                    <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </article>
+            {% endfor %}
+        </div>
+        </div>
+
+        {% if page.show_form %}
+        <form method="post" class="landing-contact-form glass-strong">
+            {% csrf_token %}
+            {% if messages %}
+            {% for msg in messages %}
+            <div class="alert {% if msg.tags == 'error' %}alert-error{% elif msg.tags == 'success' %}alert-success{% else %}alert-info{% endif %}">
+                {{ msg }}
+            </div>
+            {% endfor %}
+            {% endif %}
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label">Institute Name</label>
+                    <input class="form-input" type="text" name="institute_name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Contact Name</label>
+                    <input class="form-input" type="text" name="contact_name" required>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input class="form-input" type="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input class="form-input" type="text" name="phone">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Students</label>
+                <input class="form-input" type="text" name="student_count" placeholder="e.g. 800 students">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Message</label>
+                <textarea class="form-input" name="message" rows="4" placeholder="Tell us how EduMatrix can help your institution."></textarea>
+            </div>
+            <button class="btn btn-primary btn-lg btn-full" type="submit">Send Request</button>
+        </form>
+        {% endif %}
+    </section>
+
+    {% include "partials/public_footer.html" %}
+</main>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}Launch Center{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between" style="gap:1rem;flex-wrap:wrap;">
+        <div>
+            <h1 class="page-title">Launch Center</h1>
+            <p class="page-subtitle">Production readiness, security, and experience checks for EduMatrix.</p>
+        </div>
+        <div class="card" style="padding:1rem 1.25rem;min-width:220px;">
+            <div style="font-size:.75rem;color:var(--text-muted);font-weight:800;text-transform:uppercase;letter-spacing:.12em;">Readiness</div>
+            <div style="font-size:2.25rem;font-weight:950;line-height:1;margin-top:.35rem;">{{ readiness }}%</div>
+            <div style="margin-top:.75rem;height:8px;border-radius:999px;background:rgba(148,163,184,.18);overflow:hidden;">
+                <div style="width:{{ readiness }}%;height:100%;background:linear-gradient(90deg,#10b981,#22c7d9);"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="card stat-card"><span class="stat-card-label">Passing</span><div class="stat-card-value">{{ success_count }}</div><div class="stat-card-change text-emerald">Ready checks</div></div>
+        <div class="card stat-card"><span class="stat-card-label">Warnings</span><div class="stat-card-value">{{ warning_count }}</div><div class="stat-card-change text-amber">Improve before launch</div></div>
+        <div class="card stat-card"><span class="stat-card-label">Blockers</span><div class="stat-card-value">{{ blocker_count }}</div><div class="stat-card-change text-rose">Must fix</div></div>
+        <div class="card stat-card"><span class="stat-card-label">Total Checks</span><div class="stat-card-value">{{ total_checks }}</div><div class="stat-card-change text-muted">Tracked areas</div></div>
+    </div>
+
+    {% for group in groups %}
+    <div class="card chart-container">
+        <div class="chart-header">
+            <div>
+                <h3 class="chart-title">{{ group.title }}</h3>
+                <p class="chart-subtitle">Launch quality gates for this area</p>
+            </div>
+        </div>
+        <div class="grid-2">
+            {% for item in group.items %}
+            <div class="card launch-check launch-check-{{ item.level }}" style="padding:1.1rem;border-radius:.85rem;">
+                <div style="display:flex;align-items:flex-start;gap:.85rem;">
+                    <div class="launch-check-dot"></div>
+                    <div style="min-width:0;">
+                        <h4 style="margin:0 0 .35rem;font-size:1rem;font-weight:850;">{{ item.title }}</h4>
+                        <p style="margin:0;color:var(--text-secondary);line-height:1.55;font-size:.9rem;">{{ item.detail }}</p>
+                        {% if not item.ok and item.action %}
+                        <p style="margin:.65rem 0 0;color:var(--text-muted);font-size:.82rem;font-weight:700;">{{ item.action }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+.launch-check { border:1px solid var(--border-subtle); }
+.launch-check-dot { width:.8rem;height:.8rem;border-radius:50%;margin-top:.2rem;flex:0 0 auto;background:#10b981;box-shadow:0 0 0 5px rgba(16,185,129,.12); }
+.launch-check-success { border-color:rgba(16,185,129,.26); }
+.launch-check-warning { border-color:rgba(245,158,11,.32); }
+.launch-check-warning .launch-check-dot { background:#f59e0b;box-shadow:0 0 0 5px rgba(245,158,11,.14); }
+.launch-check-danger { border-color:rgba(244,63,94,.36); }
+.launch-check-danger .launch-check-dot { background:#f43f5e;box-shadow:0 0 0 5px rgba(244,63,94,.14); }
+</style>
+{% endblock %}

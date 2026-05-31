@@ -1,0 +1,74 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}{{ thread.title }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <a href="{% url 'forum' %}" style="font-size: 0.875rem; color: var(--indigo-500); font-weight: 600;">← Back to Forum</a>
+
+    <!-- Thread -->
+    <div class="card fade-in">
+        <div class="flex items-center gap-3" style="margin-bottom: 1rem;">
+            <div class="sidebar-user-avatar" style="width: 2.75rem; height: 2.75rem; font-size: 0.8rem;">
+                {{ thread.author.first_name|make_list|first|default:"U" }}{{ thread.author.last_name|make_list|first|default:"" }}
+            </div>
+            <div>
+                <div style="font-weight: 700;">{{ thread.author.get_full_name|default:thread.author.username }}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">
+                    <span class="badge badge-{% if thread.author.role == 'teacher' %}pending{% elif thread.author.role == 'admin' %}absent{% else %}present{% endif %}" style="font-size: 0.625rem;">{{ thread.author.role|upper }}</span>
+                    · {{ thread.created_at|date:"d M Y, H:i" }}
+                </div>
+            </div>
+        </div>
+        <h1 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 1rem;">
+            {% if thread.is_pinned %}📌 {% endif %}{% if thread.is_locked %}🔒 {% endif %}{{ thread.title }}
+        </h1>
+        <div style="font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.8; white-space: pre-wrap;">{{ thread.content }}</div>
+        {% if thread.course_class %}
+        <div style="margin-top: 1rem;">
+            <span class="badge badge-pending">{{ thread.course_class.name }} — {{ thread.course_class.subject }}</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Replies -->
+    <h3 style="font-size: 1rem; font-weight: 700;">💬 {{ replies|length }} Replies</h3>
+
+    {% for reply in replies %}
+    <div class="card fade-in" style="margin-left: 2rem; border-left: 3px solid var(--indigo-500);">
+        <div class="flex items-center gap-3" style="margin-bottom: 0.75rem;">
+            <div class="sidebar-user-avatar" style="width: 2rem; height: 2rem; font-size: 0.625rem;">
+                {{ reply.author.first_name|make_list|first|default:"U" }}{{ reply.author.last_name|make_list|first|default:"" }}
+            </div>
+            <div>
+                <span style="font-weight: 700; font-size: 0.875rem;">{{ reply.author.get_full_name|default:reply.author.username }}</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 0.5rem;">{{ reply.created_at|timesince }} ago</span>
+            </div>
+        </div>
+        <p style="font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.7; white-space: pre-wrap;">{{ reply.content }}</p>
+    </div>
+    {% empty %}
+    <div class="card" style="text-align: center; padding: 2rem; margin-left: 2rem;">
+        <p style="color: var(--text-muted);">No replies yet. Be the first!</p>
+    </div>
+    {% endfor %}
+
+    <!-- Reply Form -->
+    {% if not thread.is_locked %}
+    <div class="card fade-in" style="margin-left: 2rem;">
+        <h4 style="font-size: 0.9375rem; font-weight: 700; margin-bottom: 1rem;">Post a Reply</h4>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <textarea name="content" class="form-input" rows="4" placeholder="Write your reply..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Post Reply
+            </button>
+        </form>
+    </div>
+    {% else %}
+    <div class="alert alert-info" style="margin-left: 2rem;">🔒 This discussion is locked. No new replies can be posted.</div>
+    {% endif %}
+</div>
+{% endblock %}

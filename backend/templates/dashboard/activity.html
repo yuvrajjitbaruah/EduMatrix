@@ -1,0 +1,37 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}Activity Feed{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div>
+        <h1 class="page-title">Activity Feed 📋</h1>
+        <p class="page-subtitle">{% if user.role == 'admin' %}All recent activity across the platform{% else %}Your recent activity{% endif %}</p>
+    </div>
+
+    <div class="card fade-in">
+        {% if activities %}
+        <div class="space-y-1">
+            {% for log in activities %}
+            <div style="display: flex; align-items: flex-start; gap: 1rem; padding: 0.875rem 0; {% if not forloop.last %}border-bottom: 1px solid var(--border-subtle);{% endif %}">
+                <div style="width: 2.25rem; height: 2.25rem; border-radius: 0.75rem; background: rgba(99,102,241,0.1); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;">
+                    {{ log.get_action_display|truncatechars:2 }}
+                </div>
+                <div style="flex: 1;">
+                    <div style="font-size: 0.875rem; font-weight: 600;">
+                        {% if user.role == 'admin' %}<span style="color: var(--indigo-500);">{{ log.user.get_full_name|default:log.user.username }}</span> — {% endif %}
+                        {{ log.description }}
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.125rem;">{{ log.created_at|timesince }} ago</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 3rem;">
+            <p style="font-size: 2rem; margin-bottom: 0.5rem;">📋</p>
+            <p style="color: var(--text-muted);">No activity recorded yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

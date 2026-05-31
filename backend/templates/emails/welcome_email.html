@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Welcome to EduMatrix</title>
+</head>
+<body style="margin:0; padding:0; background:#061214; font-family:Arial, Helvetica, sans-serif; color:#10201f;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#061214; padding:28px 12px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px; background:#ffffff; border-radius:24px; overflow:hidden; border:1px solid #d9f4ee;">
+                    <tr>
+                        <td style="padding:32px 32px 20px; background:linear-gradient(135deg,#e7fffa,#f3fff0);">
+                            <img src="https://edumatrix.tech/logo.png" alt="EduMatrix" width="220" style="display:block; width:220px; max-width:78%; height:auto; border:0; outline:none; text-decoration:none;">
+                            <p style="margin:18px 0 0; color:#0f766e; font-size:13px; font-weight:800; letter-spacing:.12em; text-transform:uppercase;">Account verified</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:24px 32px 34px;">
+                            <h1 style="margin:0 0 16px; color:#071317; font-size:34px; line-height:1.08;">Welcome to EduMatrix, {{ user.first_name|default:user.username }}.</h1>
+                            <p style="margin:0 0 18px; color:#36514d; font-size:16px; line-height:1.7;">
+                                Your email has been verified and your account is ready.
+                            </p>
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:22px 0; background:#f3fbf8; border:1px solid #d8eee8; border-radius:16px; overflow:hidden;">
+                                <tr>
+                                    <td style="padding:18px;">
+                                        <p style="margin:0; color:#123d38; font-size:15px; line-height:1.7;">
+                                            Use EduMatrix to manage classrooms, attendance, assignments, grades, communication, and student progress from one connected platform.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p style="margin:0 0 18px; color:#36514d; font-size:15px; line-height:1.7;">
+                                Need help getting started? Reach the EduMatrix support team at <a href="mailto:support@edumatrix.tech" style="color:#0f766e; font-weight:700; text-decoration:none;">support@edumatrix.tech</a>.
+                            </p>
+                            <a href="{{ site_url }}{% url 'login' %}" style="display:inline-block; padding:14px 22px; border-radius:999px; background:#11b7aa; color:#ffffff; font-weight:700; text-decoration:none;">Open EduMatrix</a>
+                            <p style="margin:26px 0 0; color:#6a7f7b; font-size:13px; line-height:1.6;">
+                                Copyright 2026 - EduMatrix, All Rights Reserved.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -1,0 +1,56 @@
+{% extends 'dashboard/layout.html' %}
+{% block title %}Bookmarks | EduMatrix{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1 class="page-title">🔖 Bookmarks</h1><p class="page-subtitle">Save and organize your favorites — {{ total }} saved</p></div></div>
+
+<!-- Add Bookmark -->
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">Add Bookmark</h3></div>
+    <div class="card-body">
+        <form method="post" class="form-grid form-grid-2">
+            {% csrf_token %}<input type="hidden" name="action" value="add">
+            <div class="form-group"><label class="form-label">Title</label><input type="text" name="title" class="form-input" required placeholder="Bookmark name..."></div>
+            <div class="form-group"><label class="form-label">Type</label><select name="content_type" class="form-input"><option value="assignment">📝 Assignment</option><option value="recording">🎬 Recording</option><option value="note">📋 Note</option><option value="link">🔗 Link</option><option value="resource">📚 Resource</option><option value="other">📌 Other</option></select></div>
+            <div class="form-group"><label class="form-label">Reference ID</label><input type="text" name="object_id" class="form-input" required placeholder="Item ID or reference"></div>
+            <div class="form-group"><label class="form-label">URL (optional)</label><input type="url" name="url" class="form-input" placeholder="https://..."></div>
+            <div class="form-group" style="grid-column:span 2;"><button type="submit" class="btn btn-primary">🔖 Save Bookmark</button></div>
+        </form>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-6">
+    <div class="card-body" style="padding:.75rem 1rem;display:flex;gap:.5rem;flex-wrap:wrap;">
+        <a href="{% url 'bookmarks' %}" class="btn {% if not type_filter %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">All</a>
+        <a href="?type=assignment" class="btn {% if type_filter == 'assignment' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">📝 Assignments</a>
+        <a href="?type=recording" class="btn {% if type_filter == 'recording' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">🎬 Recordings</a>
+        <a href="?type=note" class="btn {% if type_filter == 'note' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">📋 Notes</a>
+        <a href="?type=link" class="btn {% if type_filter == 'link' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">🔗 Links</a>
+        <a href="?type=resource" class="btn {% if type_filter == 'resource' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">📚 Resources</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h3 class="card-title">Saved Bookmarks</h3></div>
+    <div class="card-body">
+        {% for bm in bookmarks %}
+        <div class="list-item">
+            <div style="font-size:1.5rem;margin-right:.75rem;">
+                {% if bm.content_type == 'assignment' %}📝{% elif bm.content_type == 'recording' %}🎬{% elif bm.content_type == 'note' %}📋{% elif bm.content_type == 'link' %}🔗{% elif bm.content_type == 'resource' %}📚{% else %}📌{% endif %}
+            </div>
+            <div class="list-item-content" style="flex:1;">
+                <strong style="color:var(--text-primary);">{{ bm.title }}</strong>
+                <div style="display:flex;gap:.5rem;align-items:center;margin-top:.25rem;">
+                    <span class="badge badge-ghost">{{ bm.content_type|title }}</span>
+                    <span style="font-size:.8rem;color:var(--text-muted);">Saved {{ bm.created_at|date:"d M Y" }}</span>
+                </div>
+                {% if bm.url %}<a href="{{ bm.url }}" target="_blank" style="font-size:.85rem;color:var(--primary-400);">{{ bm.url|truncatechars:50 }}</a>{% endif %}
+            </div>
+            <form method="post" style="margin:0;">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="bookmark_id" value="{{ bm.id }}"><button type="submit" class="btn btn-ghost btn-sm" onclick="return confirm('Remove bookmark?')">🗑️</button></form>
+        </div>
+        {% empty %}
+        <div class="empty-state"><div class="empty-state-icon">🔖</div><h3>No bookmarks saved</h3><p>Save items to access them quickly later</p></div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

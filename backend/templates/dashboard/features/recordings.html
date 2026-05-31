@@ -1,0 +1,49 @@
+{% extends 'dashboard/layout.html' %}
+{% block title %}Class Recordings | EduMatrix{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1 class="page-title">🎬 Class Recordings</h1><p class="page-subtitle">{{ total_recordings }} recordings • {{ total_duration }} minutes of content</p></div></div>
+
+{% if teacher_classes %}
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">Upload Recording</h3></div>
+    <div class="card-body">
+        <form method="post" class="form-grid form-grid-2">
+            {% csrf_token %}<input type="hidden" name="action" value="create">
+            <div class="form-group"><label class="form-label">Class</label><select name="class_id" class="form-input" required>{% for cls in teacher_classes %}<option value="{{ cls.id }}">{{ cls.name }} — {{ cls.subject }}</option>{% endfor %}</select></div>
+            <div class="form-group"><label class="form-label">Title</label><input type="text" name="title" class="form-input" required placeholder="e.g. Chapter 5 - Thermodynamics"></div>
+            <div class="form-group"><label class="form-label">Video URL</label><input type="url" name="video_url" class="form-input" required placeholder="https://youtube.com/..."></div>
+            <div class="form-group"><label class="form-label">Recording Date</label><input type="date" name="recording_date" class="form-input" required></div>
+            <div class="form-group"><label class="form-label">Duration (minutes)</label><input type="number" name="duration_minutes" class="form-input" value="45"></div>
+            <div class="form-group"><label class="form-label">Description</label><input type="text" name="description" class="form-input" placeholder="Brief description..."></div>
+            <div class="form-group" style="grid-column:span 2;"><button type="submit" class="btn btn-primary">🎬 Upload Recording</button></div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header"><h3 class="card-title">All Recordings</h3></div>
+    <div class="card-body">
+        <div class="grid-responsive">
+            {% for rec in recordings %}
+            <div class="feature-card">
+                <div style="background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(168,85,247,0.1));border-radius:var(--radius-md);padding:1rem;text-align:center;margin-bottom:.75rem;">
+                    <span style="font-size:2.5rem;">🎬</span>
+                    {% if rec.duration_minutes %}<p style="font-size:.8rem;color:var(--text-muted);margin-top:.25rem;">⏱ {{ rec.duration_minutes }} min</p>{% endif %}
+                </div>
+                <h4 style="color:var(--text-primary);font-weight:600;margin-bottom:.25rem;">{{ rec.title }}</h4>
+                <span class="badge badge-info" style="margin-bottom:.5rem;">{{ rec.course_class.name }}</span>
+                {% if rec.description %}<p style="font-size:.85rem;color:var(--text-muted);margin:.25rem 0;">{{ rec.description|truncatewords:15 }}</p>{% endif %}
+                <div style="font-size:.8rem;color:var(--text-muted);margin:.5rem 0;">📅 {{ rec.recording_date }} • 👤 {{ rec.uploaded_by.get_full_name|default:rec.uploaded_by.username }}</div>
+                <a href="{{ rec.video_url }}" target="_blank" class="btn btn-primary btn-sm" style="width:100%;margin-top:.5rem;">▶ Watch Recording</a>
+                {% if user.role in 'admin teacher' %}
+                <form method="post" style="margin-top:.5rem;">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="rec_id" value="{{ rec.id }}"><button type="submit" class="btn btn-ghost btn-sm" style="width:100%;" onclick="return confirm('Delete?')">🗑️ Delete</button></form>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="empty-state" style="grid-column:1/-1;"><div class="empty-state-icon">🎬</div><h3>No recordings yet</h3></div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

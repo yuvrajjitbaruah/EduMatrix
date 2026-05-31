@@ -1,0 +1,69 @@
+{% extends 'dashboard/layout.html' %}
+{% block title %}Course Feedback | EduMatrix{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1 class="page-title">⭐ Course Feedback</h1><p class="page-subtitle">{{ total_feedbacks }} reviews • Average rating: {{ avg_rating }} / 5</p></div></div>
+
+{% if user.role == 'student' and pending_classes %}
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">Submit Feedback</h3></div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}<input type="hidden" name="action" value="submit">
+            <div class="form-grid form-grid-2">
+                <div class="form-group"><label class="form-label">Course</label><select name="class_id" class="form-input" required>{% for cls in pending_classes %}<option value="{{ cls.id }}">{{ cls.name }} — {{ cls.subject }}</option>{% endfor %}</select></div>
+                <div class="form-group">
+                    <label class="form-label">Rating</label>
+                    <div style="display:flex;gap:.25rem;" id="starContainer">
+                        {% for i in "12345"|make_list %}
+                        <label style="cursor:pointer;font-size:1.8rem;">
+                            <input type="radio" name="rating" value="{{ i }}" style="display:none;" {% if i == '5' %}checked{% endif %}>
+                            <span class="star-label" data-val="{{ i }}">{% if i == '5' %}⭐{% else %}☆{% endif %}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="form-group" style="grid-column:span 2;"><label class="form-label">Review</label><textarea name="review" class="form-input" rows="3" placeholder="Share your experience..."></textarea></div>
+                <div class="form-group">
+                    <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
+                        <input type="checkbox" name="is_anonymous" style="width:18px;height:18px;">
+                        <span>Submit anonymously</span>
+                    </label>
+                </div>
+                <div class="form-group" style="display:flex;align-items:flex-end;"><button type="submit" class="btn btn-primary" style="width:100%;">Submit Review</button></div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+document.querySelectorAll('.star-label').forEach(s => {
+    s.addEventListener('click', function() {
+        const val = parseInt(this.dataset.val);
+        document.querySelectorAll('.star-label').forEach(st => {
+            st.textContent = parseInt(st.dataset.val) <= val ? '⭐' : '☆';
+        });
+    });
+});
+</script>
+{% endif %}
+
+<div class="card">
+    <div class="card-header"><h3 class="card-title">All Feedback</h3></div>
+    <div class="card-body">
+        {% for fb in feedbacks %}
+        <div class="list-item">
+            <div class="list-item-content" style="flex:1;">
+                <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.25rem;">
+                    <span class="badge badge-info">{{ fb.course_class.name }}</span>
+                    <span style="font-size:1.1rem;">{% for i in "12345"|make_list %}{% if forloop.counter <= fb.rating %}⭐{% else %}☆{% endif %}{% endfor %}</span>
+                    {% if fb.is_anonymous %}<span class="badge badge-ghost">Anonymous</span>{% endif %}
+                </div>
+                {% if fb.review %}<p style="color:var(--text-secondary);font-size:.9rem;margin:.25rem 0;">"{{ fb.review }}"</p>{% endif %}
+                <span style="font-size:.8rem;color:var(--text-muted);">{% if not fb.is_anonymous and user.role != 'student' %}{{ fb.student.get_full_name|default:fb.student.username }} • {% endif %}{{ fb.submitted_date }}</span>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state"><div class="empty-state-icon">⭐</div><h3>No feedback submitted yet</h3></div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

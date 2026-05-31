@@ -1,0 +1,46 @@
+{% extends 'dashboard/layout.html' %}
+{% block title %}Exam Seating | EduMatrix{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1 class="page-title">💺 Exam Seating Plan</h1><p class="page-subtitle">Manage exam room and seat assignments</p></div></div>
+
+{% if user.role in 'admin teacher' %}
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">Assign Seat</h3></div>
+    <div class="card-body">
+        <form method="post" class="form-grid form-grid-2">
+            {% csrf_token %}<input type="hidden" name="action" value="create">
+            <div class="form-group"><label class="form-label">Exam</label><select name="exam_id" class="form-input" required>{% for e in exams %}<option value="{{ e.id }}">{{ e.title }} — {{ e.course_class.name }}</option>{% endfor %}</select></div>
+            <div class="form-group"><label class="form-label">Student</label><select name="student_id" class="form-input" required>{% for s in students %}<option value="{{ s.id }}">{{ s.get_full_name|default:s.username }} ({{ s.roll_no|default:'—' }})</option>{% endfor %}</select></div>
+            <div class="form-group"><label class="form-label">Room</label><input type="text" name="room" class="form-input" placeholder="e.g. Hall A, Room 201" required></div>
+            <div class="form-group"><label class="form-label">Seat Number</label><input type="text" name="seat_number" class="form-input" placeholder="e.g. A12" required></div>
+            <div class="form-group" style="grid-column:span 2;"><button type="submit" class="btn btn-primary">Assign Seat</button></div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header"><h3 class="card-title">Seating Assignments</h3></div>
+    <div class="card-body" style="overflow-x:auto;">
+        <table class="data-table">
+            <thead><tr>{% if user.role != 'student' %}<th>Student</th><th>Roll No</th>{% endif %}<th>Exam</th><th>Class</th><th>Room</th><th>Seat</th>{% if user.role in 'admin teacher' %}<th>Action</th>{% endif %}</tr></thead>
+            <tbody>
+                {% for seat in seats %}
+                <tr>
+                    {% if user.role != 'student' %}<td><strong style="color:var(--text-primary);">{{ seat.student.get_full_name|default:seat.student.username }}</strong></td><td style="color:var(--text-muted);">{{ seat.student.roll_no|default:'—' }}</td>{% endif %}
+                    <td style="color:var(--text-secondary);">{{ seat.exam.title }}</td>
+                    <td><span class="badge badge-info">{{ seat.exam.course_class.name }}</span></td>
+                    <td><span class="badge badge-ghost">{{ seat.room }}</span></td>
+                    <td style="font-weight:700;color:var(--primary-400);font-size:1.1rem;">{{ seat.seat_number }}</td>
+                    {% if user.role in 'admin teacher' %}
+                    <td><form method="post" style="margin:0;">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="seat_id" value="{{ seat.id }}"><button type="submit" class="btn btn-ghost btn-sm" onclick="return confirm('Remove?')">🗑️</button></form></td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">No seating assignments</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

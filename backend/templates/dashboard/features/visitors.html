@@ -1,0 +1,58 @@
+{% extends 'dashboard/layout.html' %}
+{% block title %}Visitor Log | EduMatrix{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1 class="page-title">🚪 Visitor Log</h1><p class="page-subtitle">Track campus visitors</p></div></div>
+
+<div class="stats-grid stats-grid-2">
+    <div class="stat-card"><div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">🟢</div><div class="stat-info"><div class="stat-value">{{ currently_in }}</div><div class="stat-label">Currently Inside</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background: linear-gradient(135deg, var(--primary-500), var(--purple-500));">📊</div><div class="stat-info"><div class="stat-value">{{ today_total }}</div><div class="stat-label">Today's Visitors</div></div></div>
+</div>
+
+{% if user.role in 'admin teacher' %}
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">Log New Visitor</h3></div>
+    <div class="card-body">
+        <form method="post" class="form-grid form-grid-2">
+            {% csrf_token %}<input type="hidden" name="action" value="log_in">
+            <div class="form-group"><label class="form-label">Visitor Name</label><input type="text" name="visitor_name" class="form-input" required></div>
+            <div class="form-group"><label class="form-label">Contact Number</label><input type="text" name="contact_number" class="form-input" required></div>
+            <div class="form-group"><label class="form-label">Purpose</label><input type="text" name="purpose" class="form-input" required></div>
+            <div class="form-group"><label class="form-label">Visiting Whom</label><input type="text" name="visiting_whom" class="form-input" required></div>
+            <div class="form-group"><label class="form-label">ID Proof</label><input type="text" name="id_proof" class="form-input" placeholder="Optional"></div>
+            <div class="form-group" style="display:flex;align-items:flex-end;"><button type="submit" class="btn btn-primary" style="width:100%;">Log Visitor In</button></div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header"><h3 class="card-title">Visitor Records</h3></div>
+    <div class="card-body" style="overflow-x:auto;">
+        <table class="data-table">
+            <thead><tr><th>Visitor</th><th>Contact</th><th>Purpose</th><th>Visiting</th><th>In Time</th><th>Out Time</th><th>Status</th>{% if user.role in 'admin teacher' %}<th>Action</th>{% endif %}</tr></thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td><strong style="color:var(--text-primary);">{{ log.visitor_name }}</strong>{% if log.id_proof %}<br><span style="font-size:.75rem;color:var(--text-muted);">ID: {{ log.id_proof }}</span>{% endif %}</td>
+                    <td style="color:var(--text-secondary);">{{ log.contact_number }}</td>
+                    <td style="color:var(--text-secondary);">{{ log.purpose }}</td>
+                    <td style="color:var(--text-secondary);">{{ log.visiting_whom }}</td>
+                    <td style="color:var(--text-muted);font-size:.85rem;">{{ log.in_time|date:"d M Y H:i" }}</td>
+                    <td style="color:var(--text-muted);font-size:.85rem;">{% if log.out_time %}{{ log.out_time|date:"H:i" }}{% else %}—{% endif %}</td>
+                    <td>{% if log.out_time %}<span class="badge badge-ghost">Left</span>{% else %}<span class="badge badge-success">Inside</span>{% endif %}</td>
+                    {% if user.role in 'admin teacher' %}
+                    <td>
+                        {% if not log.out_time %}
+                        <form method="post" style="margin:0;">{% csrf_token %}<input type="hidden" name="action" value="log_out"><input type="hidden" name="log_id" value="{{ log.id }}"><button type="submit" class="btn btn-ghost btn-sm">Log Out</button></form>
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted);">No visitor records</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,278 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}Profile Settings{% endblock %}
+
+{% block content %}
+<div class="space-y-6" style="max-width: 72rem; margin: 0 auto;">
+    <section class="dashboard-hero">
+        <div>
+            <h1 class="page-title">Profile Settings</h1>
+            <p class="page-subtitle">Manage personal details, secure your account, and review recent account activity.</p>
+        </div>
+    </section>
+
+    <section class="dashboard-duo dashboard-duo-wide">
+        <div class="card fade-in">
+            <div class="chart-header">
+                <div>
+                    <h3 class="chart-title">Personal Information</h3>
+                    <p class="chart-subtitle">Keep your identity and contact profile up to date.</p>
+                </div>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data" class="space-y-4" id="profile-settings-form" data-username-availability-url="{% url 'username_availability' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_profile">
+
+                <div class="profile-hero-card">
+                    <div class="profile-avatar-frame">
+                        {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture.url }}" alt="Profile" class="profile-avatar-image">
+                        {% else %}
+                            <span>{{ user.first_name|make_list|first|default:"U" }}{{ user.last_name|make_list|first|default:"" }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="profile-hero-copy">
+                        <strong>{{ user.get_full_name|default:user.username }}</strong>
+                        <span class="metric-pill">{{ user.role|upper }}</span>
+                        <label class="form-label" style="margin-top: 1rem;">Profile Picture</label>
+                        <input type="file" name="profile_picture" accept="image/*" style="font-size: 0.875rem; color: var(--text-muted);">
+                    </div>
+                </div>
+
+                <div class="grid-2" style="gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">First Name</label>
+                        <input type="text" name="first_name" class="form-input" value="{{ user.first_name }}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" name="last_name" class="form-input" value="{{ user.last_name }}">
+                    </div>
+                </div>
+
+                <div class="grid-2" style="gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input
+                            type="text"
+                            name="username"
+                            id="profile-username"
+                            class="form-input"
+                            value="{{ user.username }}"
+                            maxlength="150"
+                            autocomplete="username"
+                            data-current-username="{{ user.username }}"
+                            spellcheck="false"
+                        >
+                        <p class="field-help">Use letters, numbers, and <code>@/./+/-/_</code>. Your sign-in can use this username.</p>
+                        <p class="field-status" id="username-availability" data-state="neutral">This is your current username.</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" name="email" class="form-input" value="{{ user.email }}">
+                    </div>
+                </div>
+
+                <div class="grid-2" style="gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Phone Number</label>
+                        <input type="tel" name="phone_number" class="form-input" value="{{ user.phone_number|default:'' }}" placeholder="+91 9876543210">
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; border-top:1px solid var(--border-subtle); padding-top:1.25rem;">
+                    <button type="submit" class="btn btn-primary">Save Profile</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="space-y-6">
+            <div class="card fade-in fade-delay-1">
+                <div class="chart-header">
+                    <div>
+                        <h3 class="chart-title">Security Overview</h3>
+                        <p class="chart-subtitle">Email verification, account access, login signals, and password history.</p>
+                    </div>
+                </div>
+                <div class="ops-grid profile-security-grid">
+                    {% for card in security_cards %}
+                    <article class="ops-card profile-security-card tone-{{ card.tone }}">
+                        <div class="ops-card-head">
+                            <h4>{{ card.label }}</h4>
+                            <span class="metric-pill metric-pill-truncate" title="{{ card.value }}">{{ card.value }}</span>
+                        </div>
+                        <div class="ops-card-copy">
+                            {% if card.detail_label %}
+                            <span class="ops-card-kicker">{{ card.detail_label }}</span>
+                            {% endif %}
+                            <p class="ops-card-detail">{{ card.detail }}</p>
+                            {% if card.meta %}
+                            <p class="ops-card-meta">{{ card.meta }}</p>
+                            {% endif %}
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card fade-in fade-delay-2">
+                <div class="chart-header">
+                    <div>
+                        <h3 class="chart-title">Recent Account Activity</h3>
+                        <p class="chart-subtitle">Latest security-relevant actions recorded for this account.</p>
+                    </div>
+                </div>
+                <div class="list-stack">
+                    {% for event in recent_security_events %}
+                    <div class="list-row">
+                        <div>
+                            <strong>{{ event.description }}</strong>
+                            <p>{{ event.get_action_display }}</p>
+                        </div>
+                        <span class="metric-pill">{{ event.created_at|date:"d M, H:i" }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">No account activity has been recorded yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="dashboard-duo dashboard-duo-wide">
+        <div class="card fade-in fade-delay-2">
+            <div class="chart-header">
+                <div>
+                    <h3 class="chart-title">Change Password</h3>
+                    <p class="chart-subtitle">Use a strong password and rotate it regularly.</p>
+                </div>
+            </div>
+            <form method="POST" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="change_password">
+
+                <div class="form-group">
+                    <label class="form-label">Current Password</label>
+                    <input type="password" name="current_password" class="form-input" placeholder="Enter current password" required>
+                </div>
+                <div class="grid-2" style="gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">New Password</label>
+                        <input type="password" name="new_password" class="form-input" placeholder="Use a strong new password" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Confirm New Password</label>
+                        <input type="password" name="confirm_password" class="form-input" placeholder="Repeat the new password" required>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; border-top:1px solid var(--border-subtle); padding-top:1.25rem;">
+                    <button type="submit" class="btn btn-primary">Update Password</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card fade-in fade-delay-3">
+            <div class="chart-header">
+                <div>
+                    <h3 class="chart-title">Account Details</h3>
+                    <p class="chart-subtitle">Core identity fields attached to this EduMatrix account.</p>
+                </div>
+            </div>
+            <div class="ops-grid account-details-grid">
+                <article class="ops-card account-detail-card">
+                    <div class="ops-card-head">
+                        <h4>Username</h4>
+                        <span class="metric-pill metric-pill-truncate" title="{{ user.username }}">{{ user.username }}</span>
+                    </div>
+                    <p>Primary username used for account access. You can update it above and check availability before saving.</p>
+                </article>
+                <article class="ops-card account-detail-card">
+                    <div class="ops-card-head">
+                        <h4>Role</h4>
+                        <span class="metric-pill metric-pill-truncate" title="{{ user.get_role_display }}">{{ user.get_role_display }}</span>
+                    </div>
+                    <p>Role-based access controls follow this account classification.</p>
+                </article>
+                <article class="ops-card account-detail-card">
+                    <div class="ops-card-head">
+                        <h4>Institution</h4>
+                        <span class="metric-pill metric-pill-truncate" title="{{ user.institution.name|default:'Not linked' }}">{{ user.institution.name|default:"Not linked" }}</span>
+                    </div>
+                    <p>Your institution is auto-linked from your verified academic email domain.</p>
+                </article>
+                {% if user.roll_no %}
+                <article class="ops-card account-detail-card">
+                    <div class="ops-card-head">
+                        <h4>Roll Number</h4>
+                        <span class="metric-pill metric-pill-truncate" title="{{ user.roll_no }}">{{ user.roll_no }}</span>
+                    </div>
+                    <p>Academic identity for learner-specific workflows.</p>
+                </article>
+                {% endif %}
+                <article class="ops-card account-detail-card">
+                    <div class="ops-card-head">
+                        <h4>Joined</h4>
+                        <span class="metric-pill metric-pill-truncate" title="{{ user.date_joined|date:'d M Y' }}">{{ user.date_joined|date:"d M Y" }}</span>
+                    </div>
+                    <p>Date this EduMatrix account was created.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ block.super }}
+<script>
+(() => {
+    const profileForm = document.getElementById('profile-settings-form');
+    const usernameInput = document.getElementById('profile-username');
+    const statusNode = document.getElementById('username-availability');
+
+    if (!profileForm || !usernameInput || !statusNode) {
+        return;
+    }
+
+    const availabilityUrl = profileForm.dataset.usernameAvailabilityUrl;
+    const currentUsername = (usernameInput.dataset.currentUsername || '').trim().toLowerCase();
+    let timerId = null;
+
+    const setStatus = (state, message) => {
+        statusNode.dataset.state = state;
+        statusNode.textContent = message;
+    };
+
+    const checkAvailability = async () => {
+        const username = usernameInput.value.trim();
+        if (!username) {
+            setStatus('error', 'Username is required.');
+            return;
+        }
+        if (username.toLowerCase() === currentUsername) {
+            setStatus('neutral', 'This is your current username.');
+            return;
+        }
+
+        setStatus('loading', 'Checking username availability...');
+        try {
+            const response = await fetch(`${availabilityUrl}?username=${encodeURIComponent(username)}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            const data = await response.json();
+            setStatus(data.available ? 'success' : 'error', data.message || 'Unable to check username right now.');
+        } catch (error) {
+            setStatus('error', 'Could not check username availability right now.');
+        }
+    };
+
+    usernameInput.addEventListener('input', () => {
+        window.clearTimeout(timerId);
+        timerId = window.setTimeout(checkAvailability, 260);
+    });
+
+    usernameInput.addEventListener('blur', checkAvailability);
+})();
+</script>
+{% endblock %}

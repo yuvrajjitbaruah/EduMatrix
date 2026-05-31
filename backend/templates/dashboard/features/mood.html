@@ -1,0 +1,111 @@
+{% extends 'dashboard/layout.html' %}
+{% block title %}Mood Tracker | EduMatrix{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1 class="page-title">😊 Mood Tracker</h1><p class="page-subtitle">Track your daily emotional well-being • {{ total_entries }} entries</p></div></div>
+
+{% if user.role == 'student' %}
+<!-- Log Today's Mood -->
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">{% if today_logged %}✅ Today's Mood Logged{% else %}How are you feeling today?{% endif %}</h3></div>
+    <div class="card-body" style="text-align:center;">
+        {% if not today_logged %}
+        <form method="post">
+            {% csrf_token %}<input type="hidden" name="action" value="log">
+            <div style="display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+                <label style="cursor:pointer;text-align:center;">
+                    <input type="radio" name="mood" value="😊" style="display:none;" checked>
+                    <div class="mood-option" style="font-size:2.5rem;padding:.75rem;border-radius:1rem;border:3px solid var(--primary-500);background:rgba(99,102,241,0.1);transition:all .2s;">😊</div>
+                    <span style="font-size:.75rem;color:var(--text-muted);display:block;margin-top:.25rem;">Happy</span>
+                </label>
+                <label style="cursor:pointer;text-align:center;">
+                    <input type="radio" name="mood" value="😐" style="display:none;">
+                    <div class="mood-option" style="font-size:2.5rem;padding:.75rem;border-radius:1rem;border:3px solid transparent;transition:all .2s;">😐</div>
+                    <span style="font-size:.75rem;color:var(--text-muted);display:block;margin-top:.25rem;">Neutral</span>
+                </label>
+                <label style="cursor:pointer;text-align:center;">
+                    <input type="radio" name="mood" value="😔" style="display:none;">
+                    <div class="mood-option" style="font-size:2.5rem;padding:.75rem;border-radius:1rem;border:3px solid transparent;transition:all .2s;">😔</div>
+                    <span style="font-size:.75rem;color:var(--text-muted);display:block;margin-top:.25rem;">Sad</span>
+                </label>
+                <label style="cursor:pointer;text-align:center;">
+                    <input type="radio" name="mood" value="🤩" style="display:none;">
+                    <div class="mood-option" style="font-size:2.5rem;padding:.75rem;border-radius:1rem;border:3px solid transparent;transition:all .2s;">🤩</div>
+                    <span style="font-size:.75rem;color:var(--text-muted);display:block;margin-top:.25rem;">Excited</span>
+                </label>
+                <label style="cursor:pointer;text-align:center;">
+                    <input type="radio" name="mood" value="😴" style="display:none;">
+                    <div class="mood-option" style="font-size:2.5rem;padding:.75rem;border-radius:1rem;border:3px solid transparent;transition:all .2s;">😴</div>
+                    <span style="font-size:.75rem;color:var(--text-muted);display:block;margin-top:.25rem;">Tired</span>
+                </label>
+                <label style="cursor:pointer;text-align:center;">
+                    <input type="radio" name="mood" value="😤" style="display:none;">
+                    <div class="mood-option" style="font-size:2.5rem;padding:.75rem;border-radius:1rem;border:3px solid transparent;transition:all .2s;">😤</div>
+                    <span style="font-size:.75rem;color:var(--text-muted);display:block;margin-top:.25rem;">Frustrated</span>
+                </label>
+                <label style="cursor:pointer;text-align:center;"><input type="radio" name="mood" value="😐" style="display:none;"><div class="mood-option" style="font-size:2.5rem;padding:.75rem;border-radius:1rem;border:3px solid transparent;transition:all .2s;">😐</div><span style="font-size:.75rem;color:var(--text-muted);">Neutral</span></label>
+                <label style="cursor:pointer;text-align:center;"><input type="radio" name="mood" value="😔" style="display:none;"><div class="mood-option" style="font-size:2.5rem;padding:.75rem;border-radius:1rem;border:3px solid transparent;transition:all .2s;">😔</div><span style="font-size:.75rem;color:var(--text-muted);">Sad</span></label>
+                <label style="cursor:pointer;text-align:center;"><input type="radio" name="mood" value="🤩" style="display:none;"><div class="mood-option" style="font-size:2.5rem;padding:.75rem;border-radius:1rem;border:3px solid transparent;transition:all .2s;">🤩</div><span style="font-size:.75rem;color:var(--text-muted);">Excited</span></label>
+                <label style="cursor:pointer;text-align:center;"><input type="radio" name="mood" value="😴" style="display:none;"><div class="mood-option" style="font-size:2.5rem;padding:.75rem;border-radius:1rem;border:3px solid transparent;transition:all .2s;">😴</div><span style="font-size:.75rem;color:var(--text-muted);">Tired</span></label>
+                <label style="cursor:pointer;text-align:center;"><input type="radio" name="mood" value="😤" style="display:none;"><div class="mood-option" style="font-size:2.5rem;padding:.75rem;border-radius:1rem;border:3px solid transparent;transition:all .2s;">😤</div><span style="font-size:.75rem;color:var(--text-muted);">Frustrated</span></label>
+                <label style="cursor:pointer;text-align:center;"><input type="radio" name="mood" value="💪" style="display:none;"><div class="mood-option" style="font-size:2.5rem;padding:.75rem;border-radius:1rem;border:3px solid transparent;transition:all .2s;">💪</div><span style="font-size:.75rem;color:var(--text-muted);">Motivated</span></label>
+            </div>
+            <input type="text" name="note" class="form-input" placeholder="Optional note about your day..." style="max-width:400px;margin:0 auto 1rem;">
+            <button type="submit" class="btn btn-primary">Log Today's Mood</button>
+        </form>
+        {% else %}
+        <p style="font-size:1.2rem;color:var(--text-secondary);">You've already logged your mood today. Come back tomorrow! 🌟</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 30-Day Mood Chart -->
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">📊 30-Day Mood Timeline</h3></div>
+    <div class="card-body">
+        <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">
+            {% for day in mood_chart_data %}
+            <div style="text-align:center;min-width:28px;">
+                <div style="font-size:1.3rem;height:32px;display:flex;align-items:center;justify-content:center;">{% if day.mood %}{{ day.mood }}{% else %}<span style="width:12px;height:12px;border-radius:50%;background:var(--border-subtle);display:inline-block;"></span>{% endif %}</div>
+                <span style="font-size:.6rem;color:var(--text-muted);">{{ day.date }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Mood History -->
+<div class="card">
+    <div class="card-header"><h3 class="card-title">Mood History</h3></div>
+    <div class="card-body">
+        {% for entry in moods %}
+        <div class="list-item">
+            <div style="font-size:2rem;margin-right:1rem;">{{ entry.mood }}</div>
+            <div class="list-item-content" style="flex:1;">
+                {% if user.role != 'student' %}<strong style="color:var(--text-primary);">{{ entry.student.get_full_name|default:entry.student.username }}</strong><br>{% endif %}
+                {% if entry.note %}<p style="color:var(--text-secondary);font-size:.9rem;">{{ entry.note }}</p>{% endif %}
+                <span style="font-size:.8rem;color:var(--text-muted);">{{ entry.date }}</span>
+            </div>
+            {% if user.role == 'student' %}
+            <form method="post" style="margin:0;">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="entry_id" value="{{ entry.id }}"><button type="submit" class="btn btn-ghost btn-sm">🗑️</button></form>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="empty-state"><div class="empty-state-icon">😊</div><h3>No mood entries yet</h3><p>Start tracking your daily mood above</p></div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('input[name="mood"]').forEach(r => {
+    r.addEventListener('change', function() {
+        document.querySelectorAll('.mood-option').forEach(d => {
+            d.style.border = '3px solid transparent';
+            d.style.background = 'transparent';
+        });
+        this.nextElementSibling.style.border = '3px solid var(--primary-500)';
+        this.nextElementSibling.style.background = 'rgba(99,102,241,0.1)';
+    });
+});
+</script>
+{% endblock %}

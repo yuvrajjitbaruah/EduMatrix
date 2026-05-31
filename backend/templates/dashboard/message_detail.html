@@ -1,0 +1,57 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}{{ message.subject }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <a href="{% url 'inbox' %}" style="font-size: 0.875rem; color: var(--indigo-500); font-weight: 600;">← Back to Inbox</a>
+
+    <!-- Message -->
+    <div class="card fade-in">
+        <div class="flex items-center justify-between" style="margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+            <h2 style="font-size: 1.25rem; font-weight: 800;">{{ message.subject }}</h2>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">{{ message.sent_at|date:"d M Y, H:i" }}</span>
+        </div>
+        <div class="flex items-center gap-3" style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-subtle);">
+            <div class="sidebar-user-avatar" style="width: 2.5rem; height: 2.5rem; font-size: 0.75rem;">
+                {{ message.sender.first_name|make_list|first|default:"U" }}{{ message.sender.last_name|make_list|first|default:"" }}
+            </div>
+            <div>
+                <div style="font-weight: 700; font-size: 0.9375rem;">{{ message.sender.get_full_name|default:message.sender.username }}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">To: {{ message.receiver.get_full_name|default:message.receiver.username }}</div>
+            </div>
+        </div>
+        <div style="font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.8; white-space: pre-wrap;">{{ message.body }}</div>
+    </div>
+
+    <!-- Thread Replies -->
+    {% for reply in replies %}
+    <div class="card fade-in" style="margin-left: 2rem; border-left: 3px solid var(--cyan-500);">
+        <div class="flex items-center gap-3" style="margin-bottom: 0.75rem;">
+            <div class="sidebar-user-avatar" style="width: 2rem; height: 2rem; font-size: 0.625rem;">
+                {{ reply.sender.first_name|make_list|first|default:"U" }}{{ reply.sender.last_name|make_list|first|default:"" }}
+            </div>
+            <div>
+                <span style="font-weight: 700; font-size: 0.875rem;">{{ reply.sender.get_full_name|default:reply.sender.username }}</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 0.5rem;">{{ reply.sent_at|timesince }} ago</span>
+            </div>
+        </div>
+        <p style="font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.7; white-space: pre-wrap;">{{ reply.body }}</p>
+    </div>
+    {% endfor %}
+
+    <!-- Reply -->
+    <div class="card fade-in" style="margin-left: 2rem;">
+        <h4 style="font-size: 0.9375rem; font-weight: 700; margin-bottom: 1rem;">Quick Reply</h4>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <textarea name="body" class="form-input" rows="3" placeholder="Write your reply..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Reply
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

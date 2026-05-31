@@ -1,0 +1,220 @@
+{% extends 'dashboard/layout.html' %}
+
+{% block title %}Pomodoro Timer | EduMatrix{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">🍅 Pomodoro Timer</h1>
+        <p class="page-subtitle">Stay focused with the Pomodoro technique</p>
+    </div>
+</div>
+
+<div style="max-width: 500px; margin: 0 auto;">
+    <!-- Timer Card -->
+    <div class="card" style="text-align: center;">
+        <div class="card-body" style="padding: 2.5rem;">
+            <!-- Mode Tabs -->
+            <div style="display: flex; gap: .5rem; justify-content: center; margin-bottom: 2rem;">
+                <button onclick="setMode('work')" id="modeWork" class="btn btn-primary btn-sm">🎯 Focus</button>
+                <button onclick="setMode('short')" id="modeShort" class="btn btn-ghost btn-sm">☕ Short Break</button>
+                <button onclick="setMode('long')" id="modeLong" class="btn btn-ghost btn-sm">🌴 Long Break</button>
+            </div>
+
+            <!-- Timer Display -->
+            <div style="position: relative; width: 240px; height: 240px; margin: 0 auto 2rem;">
+                <svg width="240" height="240" style="transform: rotate(-90deg);">
+                    <circle cx="120" cy="120" r="108" fill="none" stroke="var(--border-subtle)" stroke-width="8"/>
+                    <circle id="timerCircle" cx="120" cy="120" r="108" fill="none" stroke="var(--primary-500)" stroke-width="8" stroke-linecap="round" stroke-dasharray="678.58" stroke-dashoffset="0" style="transition: stroke-dashoffset 1s linear;"/>
+                </svg>
+                <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <span id="timerDisplay" style="font-size: 3.5rem; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums;">25:00</span>
+                    <span id="timerLabel" style="font-size: .9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px;">Focus Time</span>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem;">
+                <button onclick="startTimer()" id="btnStart" class="btn btn-primary" style="min-width: 120px;">▶ Start</button>
+                <button onclick="pauseTimer()" id="btnPause" class="btn btn-ghost" style="min-width: 120px; display: none;">⏸ Pause</button>
+                <button onclick="resetTimer()" class="btn btn-ghost" style="min-width: 80px;">↺ Reset</button>
+            </div>
+
+            <!-- Stats -->
+            <div style="display: flex; gap: 2rem; justify-content: center; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle);">
+                <div>
+                    <div id="sessionsCount" style="font-size: 1.5rem; font-weight: 700; color: var(--primary-400);">0</div>
+                    <div style="font-size: .8rem; color: var(--text-muted);">Sessions</div>
+                </div>
+                <div>
+                    <div id="totalMinutes" style="font-size: 1.5rem; font-weight: 700; color: var(--emerald-400);">0</div>
+                    <div style="font-size: .8rem; color: var(--text-muted);">Minutes Focused</div>
+                </div>
+                <div>
+                    <div id="currentStreak" style="font-size: 1.5rem; font-weight: 700; color: var(--amber-400);">0</div>
+                    <div style="font-size: .8rem; color: var(--text-muted);">Current Streak</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timer Settings -->
+    <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-header"><h3 class="card-title">⚙️ Settings</h3></div>
+        <div class="card-body">
+            <div class="form-grid form-grid-3">
+                <div class="form-group">
+                    <label class="form-label">Focus (min)</label>
+                    <input type="number" id="settingWork" class="form-input" value="25" min="1" max="90" onchange="updateSettings()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Short Break (min)</label>
+                    <input type="number" id="settingShort" class="form-input" value="5" min="1" max="30" onchange="updateSettings()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Long Break (min)</label>
+                    <input type="number" id="settingLong" class="form-input" value="15" min="1" max="60" onchange="updateSettings()">
+                </div>
+            </div>
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: .5rem; cursor: pointer;">
+                    <input type="checkbox" id="settingSound" checked style="width: 18px; height: 18px;">
+                    <span class="form-label" style="margin: 0;">🔔 Play sound when timer ends</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tips -->
+    <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-header"><h3 class="card-title">💡 How it works</h3></div>
+        <div class="card-body" style="font-size: .9rem; color: var(--text-secondary);">
+            <ol style="padding-left: 1.2rem; display: flex; flex-direction: column; gap: .5rem;">
+                <li>Set your timer to <strong>25 minutes</strong> (one Pomodoro)</li>
+                <li>Work on your task with <strong>full focus</strong></li>
+                <li>Take a <strong>5-minute break</strong> when the timer rings</li>
+                <li>After 4 sessions, take a <strong>15-minute long break</strong></li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+<script>
+let timeLeft = 25 * 60;
+let totalTime = 25 * 60;
+let isRunning = false;
+let interval = null;
+let currentMode = 'work';
+let sessions = 0;
+let totalFocusMinutes = 0;
+let streak = 0;
+
+const durations = { work: 25, short: 5, long: 15 };
+const labels = { work: 'Focus Time', short: 'Short Break', long: 'Long Break' };
+const colors = { work: 'var(--primary-500)', short: 'var(--emerald-500)', long: 'var(--amber-500)' };
+
+function updateDisplay() {
+    const m = Math.floor(timeLeft / 60);
+    const s = timeLeft % 60;
+    document.getElementById('timerDisplay').textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    const circle = document.getElementById('timerCircle');
+    const circumference = 2 * Math.PI * 108;
+    const progress = (totalTime - timeLeft) / totalTime;
+    circle.style.strokeDashoffset = circumference * (1 - progress);
+}
+
+function setMode(mode) {
+    currentMode = mode;
+    if (isRunning) pauseTimer();
+    timeLeft = durations[mode] * 60;
+    totalTime = timeLeft;
+    document.getElementById('timerLabel').textContent = labels[mode];
+    document.getElementById('timerCircle').style.stroke = colors[mode];
+    ['modeWork', 'modeShort', 'modeLong'].forEach(id => {
+        document.getElementById(id).className = id === 'mode' + mode.charAt(0).toUpperCase() + mode.slice(1) ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
+    });
+    document.getElementById('modeWork').className = mode === 'work' ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
+    document.getElementById('modeShort').className = mode === 'short' ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
+    document.getElementById('modeLong').className = mode === 'long' ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
+    updateDisplay();
+}
+
+function startTimer() {
+    if (isRunning) return;
+    isRunning = true;
+    document.getElementById('btnStart').style.display = 'none';
+    document.getElementById('btnPause').style.display = '';
+    interval = setInterval(() => {
+        timeLeft--;
+        updateDisplay();
+        if (timeLeft <= 0) {
+            clearInterval(interval);
+            isRunning = false;
+            document.getElementById('btnStart').style.display = '';
+            document.getElementById('btnPause').style.display = 'none';
+            if (currentMode === 'work') {
+                sessions++;
+                totalFocusMinutes += durations.work;
+                streak++;
+                document.getElementById('sessionsCount').textContent = sessions;
+                document.getElementById('totalMinutes').textContent = totalFocusMinutes;
+                document.getElementById('currentStreak').textContent = streak;
+                if (sessions % 4 === 0) setMode('long');
+                else setMode('short');
+            } else {
+                setMode('work');
+            }
+            if (document.getElementById('settingSound').checked) playSound();
+        }
+    }, 1000);
+}
+
+function pauseTimer() {
+    clearInterval(interval);
+    isRunning = false;
+    document.getElementById('btnStart').style.display = '';
+    document.getElementById('btnPause').style.display = 'none';
+}
+
+function resetTimer() {
+    pauseTimer();
+    timeLeft = durations[currentMode] * 60;
+    totalTime = timeLeft;
+    updateDisplay();
+}
+
+function updateSettings() {
+    durations.work = parseInt(document.getElementById('settingWork').value) || 25;
+    durations.short = parseInt(document.getElementById('settingShort').value) || 5;
+    durations.long = parseInt(document.getElementById('settingLong').value) || 15;
+    if (!isRunning) {
+        timeLeft = durations[currentMode] * 60;
+        totalTime = timeLeft;
+        updateDisplay();
+    }
+}
+
+function playSound() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 800;
+        gain.gain.value = 0.3;
+        osc.start();
+        osc.stop(ctx.currentTime + 0.5);
+        setTimeout(() => {
+            const osc2 = ctx.createOscillator();
+            osc2.connect(gain);
+            osc2.frequency.value = 1000;
+            osc2.start();
+            osc2.stop(ctx.currentTime + 0.5);
+        }, 600);
+    } catch(e) {}
+}
+
+updateDisplay();
+</script>
+{% endblock %}

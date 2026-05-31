@@ -1,0 +1,91 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Integrations Hub{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <section class="dashboard-hero">
+        <div>
+            <h1 class="page-title">Integrations Hub</h1>
+            <p class="page-subtitle">A curated hub for EduMatrix power plugins, launch integrations, and productivity modules.</p>
+        </div>
+        {% if user.role == 'admin' %}
+        <a href="{% url 'launch_center' %}" class="btn btn-secondary">Open Launch Center</a>
+        {% endif %}
+    </section>
+
+    <section class="stats-grid">
+        <article class="card stat-card fade-in fade-delay-1">
+            <div class="stat-card-header">
+                <span class="stat-card-label">Live plugins</span>
+                <div class="stat-card-icon bg-emerald">
+                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/></svg>
+                </div>
+            </div>
+            <div class="stat-card-value">{{ live_count }}</div>
+            <div class="stat-card-change text-muted">Fully active across your platform</div>
+        </article>
+        <article class="card stat-card fade-in fade-delay-2">
+            <div class="stat-card-header">
+                <span class="stat-card-label">Needs attention</span>
+                <div class="stat-card-icon bg-amber">
+                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                </div>
+            </div>
+            <div class="stat-card-value">{{ warning_count }}</div>
+            <div class="stat-card-change text-muted">Working, but still needs production polish</div>
+        </article>
+        <article class="card stat-card fade-in fade-delay-3">
+            <div class="stat-card-header">
+                <span class="stat-card-label">Setup blockers</span>
+                <div class="stat-card-icon bg-rose">
+                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+                </div>
+            </div>
+            <div class="stat-card-value">{{ setup_count }}</div>
+            <div class="stat-card-change text-muted">Modules still waiting for final setup</div>
+        </article>
+        <article class="card stat-card fade-in fade-delay-4">
+            <div class="stat-card-header">
+                <span class="stat-card-label">Total modules</span>
+                <div class="stat-card-icon bg-indigo">
+                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 7h10v10H7z"/><path d="M4 12h3"/><path d="M17 12h3"/><path d="M12 4v3"/><path d="M12 17v3"/></svg>
+                </div>
+            </div>
+            <div class="stat-card-value">{{ total_count }}</div>
+            <div class="stat-card-change text-muted">Power plugins visible in EduMatrix</div>
+        </article>
+    </section>
+
+    {% for section in integration_sections %}
+    <section class="card chart-container fade-in fade-delay-4">
+        <div class="chart-header">
+            <div>
+                <h3 class="chart-title">{{ section.title }}</h3>
+                <p class="chart-subtitle">Focused modules for {{ user.get_role_display|lower }} workflows.</p>
+            </div>
+        </div>
+        <div class="integration-grid">
+            {% for card in section.cards %}
+            <article class="integration-card tone-{{ card.tone }}">
+                <div class="integration-card-head">
+                    <div>
+                        <span class="integration-section">{{ card.section }}</span>
+                        <h4>{{ card.title }}</h4>
+                    </div>
+                    <span class="metric-pill">{{ card.status }}</span>
+                </div>
+                <p>{{ card.description }}</p>
+                <ul>
+                    {% for feature in card.features %}
+                    <li>{{ feature }}</li>
+                    {% endfor %}
+                </ul>
+                <a href="{{ card.action_url }}" class="btn btn-secondary btn-sm">{{ card.action_label }}</a>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endfor %}
+</div>
+{% endblock %}

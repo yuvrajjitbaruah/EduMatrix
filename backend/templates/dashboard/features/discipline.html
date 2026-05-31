@@ -1,0 +1,50 @@
+{% extends 'dashboard/layout.html' %}
+{% block title %}Disciplinary Records | EduMatrix{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1 class="page-title">⚖️ Disciplinary Records</h1><p class="page-subtitle">Track and manage student conduct</p></div></div>
+
+<div class="stats-grid stats-grid-3">
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,var(--primary-500),var(--purple-500));">📋</div><div class="stat-info"><div class="stat-value">{{ total }}</div><div class="stat-label">Total Records</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#ef4444,#dc2626);">🔴</div><div class="stat-info"><div class="stat-value">{{ critical_count }}</div><div class="stat-label">Critical</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);">🟡</div><div class="stat-info"><div class="stat-value">{{ major_count }}</div><div class="stat-label">Major</div></div></div>
+</div>
+
+{% if user.role in 'admin teacher' %}
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">File New Record</h3></div>
+    <div class="card-body">
+        <form method="post" class="form-grid form-grid-2">
+            {% csrf_token %}<input type="hidden" name="action" value="create">
+            <div class="form-group"><label class="form-label">Student</label><select name="student_id" class="form-input" required>{% for s in students %}<option value="{{ s.id }}">{{ s.get_full_name|default:s.username }}</option>{% endfor %}</select></div>
+            <div class="form-group"><label class="form-label">Incident Type</label><input type="text" name="incident_type" class="form-input" placeholder="e.g. Misconduct, Late, Cheating..." required></div>
+            <div class="form-group"><label class="form-label">Severity</label><select name="severity" class="form-input"><option value="minor">🟢 Minor</option><option value="moderate">🟡 Moderate</option><option value="major">🟠 Major</option><option value="critical">🔴 Critical</option></select></div>
+            <div class="form-group"><label class="form-label">Action Taken</label><input type="text" name="action_taken" class="form-input" placeholder="e.g. Warning issued"></div>
+            <div class="form-group" style="grid-column:span 2;"><label class="form-label">Description</label><textarea name="description" class="form-input" rows="3" required></textarea></div>
+            <div class="form-group" style="grid-column:span 2;"><button type="submit" class="btn btn-primary">File Record</button></div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header"><h3 class="card-title">Records</h3></div>
+    <div class="card-body">
+        {% for r in records %}
+        <div class="list-item" style="border-left:4px solid {% if r.severity == 'critical' %}var(--rose-500){% elif r.severity == 'major' %}#f59e0b{% elif r.severity == 'moderate' %}var(--amber-400){% else %}var(--emerald-500){% endif %};">
+            <div class="list-item-content">
+                <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-bottom:.25rem;">
+                    {% if user.role != 'student' %}<strong style="color:var(--text-primary);">{{ r.student.get_full_name|default:r.student.username }}</strong>{% endif %}
+                    <span class="badge {% if r.severity == 'critical' %}badge-danger{% elif r.severity == 'major' %}badge-warning{% else %}badge-info{% endif %}">{{ r.severity|upper }}</span>
+                    <span class="badge badge-ghost">{{ r.incident_type }}</span>
+                </div>
+                <p style="color:var(--text-secondary);font-size:.9rem;margin:.25rem 0;">{{ r.description }}</p>
+                {% if r.action_taken %}<p style="font-size:.85rem;color:var(--primary-400);">⚡ Action: {{ r.action_taken }}</p>{% endif %}
+                <span style="font-size:.8rem;color:var(--text-muted);">{{ r.date }} • Reported by {{ r.reported_by.get_full_name|default:r.reported_by.username }}</span>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state"><div class="empty-state-icon">⚖️</div><h3>No disciplinary records</h3></div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

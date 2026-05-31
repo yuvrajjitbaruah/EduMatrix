@@ -1,0 +1,107 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}Departments{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between gap-4" style="flex-wrap: wrap;">
+        <div>
+            <h1 class="page-title">Departments</h1>
+            <p class="page-subtitle">Create and manage the official academic departments used across classes, users, and reports.</p>
+        </div>
+    </div>
+
+    {% if can_manage_departments %}
+    <form method="post" class="card form-grid-3" style="padding: 1.25rem; align-items: end;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create">
+        <div class="form-group">
+            <label class="form-label">Department Name</label>
+            <input class="form-input" type="text" name="name" placeholder="Computer Science" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Code</label>
+            <input class="form-input" type="text" name="code" placeholder="CSE">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Description</label>
+            <input class="form-input" type="text" name="description" placeholder="Optional context">
+        </div>
+        <button class="btn btn-primary" type="submit">Create Department</button>
+    </form>
+    {% endif %}
+
+    <div class="grid-2">
+        {% for dept in dept_data %}
+        <div class="card fade-in" style="padding: 1.5rem;">
+            <div class="flex items-center justify-between gap-3" style="margin-bottom: 1.25rem;">
+                <div class="flex items-center gap-3">
+                    <div class="stat-card-icon bg-indigo" style="width: 3.25rem; height: 3.25rem; border-radius: 1rem;">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:#fff"><path d="M6 22V4a2 2 0 012-2h8a2 2 0 012 2v18Z"/></svg>
+                    </div>
+                    <div>
+                        <div style="font-size: 1.125rem; font-weight: 800;">{{ dept.name }}</div>
+                        <div style="color: var(--text-muted); font-size: 0.85rem;">
+                            {% if dept.code %}{{ dept.code }}{% else %}No code{% endif %} · {% if dept.is_active %}Active{% else %}Inactive{% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% if can_manage_departments %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="toggle">
+                    <input type="hidden" name="department_id" value="{{ dept.department.id }}">
+                    <button class="btn btn-secondary" type="submit">{% if dept.is_active %}Deactivate{% else %}Activate{% endif %}</button>
+                </form>
+                {% endif %}
+            </div>
+
+            {% if dept.description %}
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">{{ dept.description }}</p>
+            {% endif %}
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;">
+                <div style="text-align: center; padding: 0.875rem; border-radius: 0.875rem; background: rgba(148,163,184,0.06); border: 1px solid var(--border-subtle);">
+                    <div style="font-size: 1.5rem; font-weight: 800;">{{ dept.classes }}</div>
+                    <div style="font-size: 0.6875rem; text-transform: uppercase; color: var(--text-muted); margin-top: 0.25rem; font-weight: 600;">Classes</div>
+                </div>
+                <div style="text-align: center; padding: 0.875rem; border-radius: 0.875rem; background: rgba(148,163,184,0.06); border: 1px solid var(--border-subtle);">
+                    <div style="font-size: 1.5rem; font-weight: 800;">{{ dept.teachers }}</div>
+                    <div style="font-size: 0.6875rem; text-transform: uppercase; color: var(--text-muted); margin-top: 0.25rem; font-weight: 600;">Teachers</div>
+                </div>
+                <div style="text-align: center; padding: 0.875rem; border-radius: 0.875rem; background: rgba(148,163,184,0.06); border: 1px solid var(--border-subtle);">
+                    <div style="font-size: 1.5rem; font-weight: 800;">{{ dept.students }}</div>
+                    <div style="font-size: 0.6875rem; text-transform: uppercase; color: var(--text-muted); margin-top: 0.25rem; font-weight: 600;">Students</div>
+                </div>
+            </div>
+
+            {% if can_manage_departments %}
+            <details style="margin-top: 1rem;">
+                <summary style="cursor: pointer; color: var(--text-muted); font-weight: 700;">Edit department</summary>
+                <form method="post" class="form-grid-3" style="margin-top: 1rem; align-items: end;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update">
+                    <input type="hidden" name="department_id" value="{{ dept.department.id }}">
+                    <div class="form-group">
+                        <label class="form-label">Name</label>
+                        <input class="form-input" type="text" name="name" value="{{ dept.name }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Code</label>
+                        <input class="form-input" type="text" name="code" value="{{ dept.code|default:'' }}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <input class="form-input" type="text" name="description" value="{{ dept.description }}">
+                    </div>
+                    <button class="btn btn-primary" type="submit">Save Changes</button>
+                </form>
+            </details>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="card" style="padding: 1.5rem;">
+            <p class="text-muted">No departments found. Admins can create the first department above.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

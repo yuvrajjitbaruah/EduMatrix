@@ -1,0 +1,117 @@
+{% extends 'dashboard/layout.html' %}
+
+{% block title %}Homework & Planner | EduMatrix{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">📝 Homework & Planner</h1>
+        <p class="page-subtitle">Track and manage homework assignments</p>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid stats-grid-3">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, var(--primary-500), var(--purple-500));">📋</div>
+        <div class="stat-info">
+            <div class="stat-value">{{ total }}</div>
+            <div class="stat-label">Total Entries</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">⏰</div>
+        <div class="stat-info">
+            <div class="stat-value">{{ upcoming }}</div>
+            <div class="stat-label">Upcoming</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">⚠️</div>
+        <div class="stat-info">
+            <div class="stat-value">{{ overdue }}</div>
+            <div class="stat-label">Overdue</div>
+        </div>
+    </div>
+</div>
+
+{% if teacher_classes %}
+<!-- Add Homework Form -->
+<div class="card mb-6">
+    <div class="card-header">
+        <h3 class="card-title">Assign Homework</h3>
+    </div>
+    <div class="card-body">
+        <form method="post" class="form-grid form-grid-2">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+            <div class="form-group">
+                <label class="form-label">Class</label>
+                <select name="class_id" class="form-input" required>
+                    <option value="">Select class...</option>
+                    {% for cls in teacher_classes %}
+                    <option value="{{ cls.id }}">{{ cls.name }} — {{ cls.subject }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Due Date</label>
+                <input type="date" name="due_date" class="form-input" required>
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+                <label class="form-label">Description</label>
+                <textarea name="description" class="form-input" rows="3" placeholder="Describe the homework..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label" style="display: flex; align-items: center; gap: .5rem; cursor: pointer;">
+                    <input type="checkbox" name="is_important" style="width: 18px; height: 18px;">
+                    <span>Mark as Important</span>
+                </label>
+            </div>
+            <div class="form-group" style="display: flex; align-items: flex-end;">
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Assign Homework</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- Homework List -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Homework Entries</h3>
+    </div>
+    <div class="card-body">
+        {% for item in entries %}
+        <div class="list-item" style="border-left: 4px solid {% if item.is_important %}var(--rose-500){% else %}var(--primary-500){% endif %};">
+            <div class="list-item-content">
+                <div style="display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: .25rem;">
+                    {% if item.is_important %}<span class="badge badge-danger">Important</span>{% endif %}
+                    <span class="badge badge-info">{{ item.course_class.subject }}</span>
+                    <span class="badge badge-ghost">{{ item.course_class.name }}</span>
+                </div>
+                <p style="color: var(--text-primary); margin: .5rem 0;">{{ item.description }}</p>
+                <div style="display: flex; gap: 1rem; font-size: .8rem; color: var(--text-muted);">
+                    <span>📅 Due: {{ item.due_date }}</span>
+                    <span>👤 {{ item.teacher.get_full_name|default:item.teacher.username }}</span>
+                </div>
+            </div>
+            {% if user.role in 'teacher admin' %}
+            <form method="post" style="margin: 0;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="hw_id" value="{{ item.id }}">
+                <button type="submit" class="btn btn-ghost btn-sm" title="Delete" onclick="return confirm('Delete this entry?')">🗑️</button>
+            </form>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📝</div>
+            <h3>No homework entries yet</h3>
+            <p>{% if teacher_classes %}Use the form above to assign homework{% else %}No homework has been assigned yet{% endif %}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

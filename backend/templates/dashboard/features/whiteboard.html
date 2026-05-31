@@ -1,0 +1,328 @@
+{% extends 'dashboard/layout.html' %}
+
+{% block title %}Whiteboard | EduMatrix{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Collaborative Whiteboard</h1>
+        <p class="page-subtitle">Draw, sketch, and brainstorm ideas</p>
+    </div>
+</div>
+
+<div class="card whiteboard-shell">
+    <div class="card-body" style="padding: 0;">
+        <div class="whiteboard-toolbar">
+            <div class="whiteboard-tool-group">
+                <button onclick="setTool('pen')" id="toolPen" class="btn btn-primary btn-sm" title="Pen">Pen</button>
+                <button onclick="setTool('eraser')" id="toolEraser" class="btn btn-ghost btn-sm" title="Eraser">Eraser</button>
+                <button onclick="setTool('line')" id="toolLine" class="btn btn-ghost btn-sm" title="Line">Line</button>
+                <button onclick="setTool('rect')" id="toolRect" class="btn btn-ghost btn-sm" title="Rectangle">Rect</button>
+                <button onclick="setTool('circle')" id="toolCircle" class="btn btn-ghost btn-sm" title="Circle">Circle</button>
+                <button onclick="setTool('text')" id="toolText" class="btn btn-ghost btn-sm" title="Text">Text</button>
+            </div>
+
+            <div class="whiteboard-tool-group">
+                <button onclick="setColor('#ffffff', this)" class="color-btn active" style="background:#ffffff;" title="White"></button>
+                <button onclick="setColor('#6366f1', this)" class="color-btn" style="background:#6366f1;" title="Indigo"></button>
+                <button onclick="setColor('#a855f7', this)" class="color-btn" style="background:#a855f7;" title="Purple"></button>
+                <button onclick="setColor('#ef4444', this)" class="color-btn" style="background:#ef4444;" title="Red"></button>
+                <button onclick="setColor('#f59e0b', this)" class="color-btn" style="background:#f59e0b;" title="Amber"></button>
+                <button onclick="setColor('#10b981', this)" class="color-btn" style="background:#10b981;" title="Green"></button>
+                <button onclick="setColor('#3b82f6', this)" class="color-btn" style="background:#3b82f6;" title="Blue"></button>
+                <button onclick="setColor('#000000', this)" class="color-btn" style="background:#000000;" title="Black"></button>
+                <input type="color" id="customColor" onchange="setColor(this.value)" title="Custom Color">
+            </div>
+
+            <div class="whiteboard-tool-group whiteboard-size-control">
+                <span>Size</span>
+                <input type="range" id="brushSize" min="1" max="30" value="3" oninput="currentSize = Number(this.value); document.getElementById('sizeLabel').textContent = this.value;">
+                <span id="sizeLabel">3</span>
+            </div>
+
+            <div class="whiteboard-actions">
+                <button onclick="undo()" class="btn btn-ghost btn-sm" title="Undo">Undo</button>
+                <button onclick="clearCanvas()" class="btn btn-ghost btn-sm" title="Clear All">Clear</button>
+                <button onclick="downloadCanvas()" class="btn btn-primary btn-sm" title="Download">Save PNG</button>
+            </div>
+        </div>
+
+        <div class="whiteboard-canvas-wrap">
+            <canvas id="whiteboard"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 1rem;">
+    <div class="card-body" style="padding: .75rem 1rem;">
+        <div class="whiteboard-shortcuts">
+            <span><kbd>Ctrl+Z</kbd> Undo</span>
+            <span><kbd>C</kbd> Clear</span>
+            <span><kbd>E</kbd> Eraser</span>
+            <span><kbd>P</kbd> Pen</span>
+            <span><kbd>S</kbd> Save</span>
+        </div>
+    </div>
+</div>
+
+<style>
+.whiteboard-toolbar {
+    padding: .75rem 1rem;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    gap: .75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.whiteboard-tool-group {
+    display: flex;
+    gap: .35rem;
+    align-items: center;
+    padding-right: .75rem;
+    border-right: 1px solid var(--border-subtle);
+}
+.whiteboard-actions {
+    display: flex;
+    gap: .35rem;
+    margin-left: auto;
+}
+.color-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+}
+.color-btn.active {
+    border-color: var(--primary-500);
+}
+#customColor {
+    width: 28px;
+    height: 28px;
+    border: none;
+    cursor: pointer;
+    border-radius: 50%;
+    padding: 0;
+    background: transparent;
+}
+.whiteboard-size-control span {
+    font-size: .8rem;
+    color: var(--text-muted);
+}
+.whiteboard-size-control input {
+    width: 86px;
+}
+.whiteboard-canvas-wrap {
+    position: relative;
+    background: #1e1e2e;
+    overflow: hidden;
+}
+#whiteboard {
+    display: block;
+    width: 100%;
+    min-height: 520px;
+    cursor: crosshair;
+    touch-action: none;
+}
+.whiteboard-shortcuts {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    font-size: .8rem;
+    color: var(--text-muted);
+}
+.whiteboard-shortcuts kbd {
+    background: var(--bg-card);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border-subtle);
+}
+@media (max-width: 760px) {
+    .whiteboard-toolbar,
+    .whiteboard-tool-group,
+    .whiteboard-actions {
+        width: 100%;
+        margin-left: 0;
+        border-right: 0;
+        padding-right: 0;
+    }
+    .whiteboard-actions .btn,
+    .whiteboard-tool-group .btn {
+        flex: 1;
+    }
+}
+</style>
+
+<script>
+const canvas = document.getElementById('whiteboard');
+const ctx = canvas.getContext('2d');
+let isDrawing = false;
+let currentColor = '#ffffff';
+let currentSize = 3;
+let currentTool = 'pen';
+let startX = 0;
+let startY = 0;
+let undoStack = [];
+let maxUndo = 30;
+
+function resizeCanvas() {
+    const container = canvas.parentElement;
+    const ratio = window.devicePixelRatio || 1;
+    const previous = undoStack.length ? undoStack[undoStack.length - 1] : null;
+    const displayHeight = Math.max(520, window.innerHeight - 350);
+
+    canvas.width = container.clientWidth * ratio;
+    canvas.height = displayHeight * ratio;
+    canvas.style.height = displayHeight + 'px';
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    if (previous) {
+        const img = new Image();
+        img.onload = () => ctx.drawImage(img, 0, 0, canvas.width / ratio, canvas.height / ratio);
+        img.src = previous;
+    }
+}
+
+function saveState() {
+    if (undoStack.length >= maxUndo) undoStack.shift();
+    undoStack.push(canvas.toDataURL());
+}
+
+function undo() {
+    if (!undoStack.length) return;
+    undoStack.pop();
+    const ratio = window.devicePixelRatio || 1;
+    ctx.clearRect(0, 0, canvas.width / ratio, canvas.height / ratio);
+    if (undoStack.length) {
+        const img = new Image();
+        img.onload = () => ctx.drawImage(img, 0, 0, canvas.width / ratio, canvas.height / ratio);
+        img.src = undoStack[undoStack.length - 1];
+    }
+}
+
+function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const point = e.touches ? e.touches[0] : e;
+    return { x: point.clientX - rect.left, y: point.clientY - rect.top };
+}
+
+function startDraw(e) {
+    e.preventDefault();
+    const pos = getPos(e);
+    startX = pos.x;
+    startY = pos.y;
+
+    if (currentTool === 'text') {
+        const text = prompt('Enter text:');
+        if (text) {
+            ctx.font = Math.max(14, currentSize * 5) + 'px Inter, sans-serif';
+            ctx.fillStyle = currentColor;
+            ctx.fillText(text, pos.x, pos.y);
+            saveState();
+        }
+        return;
+    }
+
+    isDrawing = true;
+    if (currentTool === 'pen' || currentTool === 'eraser') {
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+    }
+}
+
+function draw(e) {
+    if (!isDrawing) return;
+    e.preventDefault();
+    const pos = getPos(e);
+
+    if (currentTool === 'pen' || currentTool === 'eraser') {
+        ctx.strokeStyle = currentTool === 'eraser' ? '#1e1e2e' : currentColor;
+        ctx.lineWidth = currentTool === 'eraser' ? currentSize * 4 : currentSize;
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+    }
+}
+
+function endDraw(e) {
+    if (!isDrawing) return;
+    isDrawing = false;
+    const rect = canvas.getBoundingClientRect();
+    const changed = e.changedTouches ? e.changedTouches[0] : e;
+    const pos = { x: changed.clientX - rect.left, y: changed.clientY - rect.top };
+
+    ctx.strokeStyle = currentColor;
+    ctx.lineWidth = currentSize;
+    if (currentTool === 'line') {
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+    } else if (currentTool === 'rect') {
+        ctx.strokeRect(startX, startY, pos.x - startX, pos.y - startY);
+    } else if (currentTool === 'circle') {
+        const rx = Math.abs(pos.x - startX) / 2;
+        const ry = Math.abs(pos.y - startY) / 2;
+        const cx = (startX + pos.x) / 2;
+        const cy = (startY + pos.y) / 2;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, rx, ry, 0, 0, 2 * Math.PI);
+        ctx.stroke();
+    }
+    saveState();
+}
+
+function setTool(tool) {
+    currentTool = tool;
+    ['toolPen', 'toolEraser', 'toolLine', 'toolRect', 'toolCircle', 'toolText'].forEach(id => {
+        document.getElementById(id).className = 'btn btn-ghost btn-sm';
+    });
+    const map = { pen: 'toolPen', eraser: 'toolEraser', line: 'toolLine', rect: 'toolRect', circle: 'toolCircle', text: 'toolText' };
+    document.getElementById(map[tool]).className = 'btn btn-primary btn-sm';
+    canvas.style.cursor = tool === 'eraser' ? 'cell' : tool === 'text' ? 'text' : 'crosshair';
+}
+
+function setColor(color, button) {
+    currentColor = color;
+    document.querySelectorAll('.color-btn').forEach(item => item.classList.remove('active'));
+    if (button) button.classList.add('active');
+    if (currentTool === 'eraser') setTool('pen');
+}
+
+function clearCanvas() {
+    if (!confirm('Clear the entire canvas?')) return;
+    const ratio = window.devicePixelRatio || 1;
+    ctx.clearRect(0, 0, canvas.width / ratio, canvas.height / ratio);
+    saveState();
+}
+
+function downloadCanvas() {
+    const link = document.createElement('a');
+    link.download = 'edumatrix-whiteboard-' + Date.now() + '.png';
+    link.href = canvas.toDataURL();
+    link.click();
+}
+
+canvas.addEventListener('mousedown', startDraw);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', endDraw);
+canvas.addEventListener('mouseleave', endDraw);
+canvas.addEventListener('touchstart', startDraw, { passive: false });
+canvas.addEventListener('touchmove', draw, { passive: false });
+canvas.addEventListener('touchend', endDraw);
+
+document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.ctrlKey && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
+    else if (e.key.toLowerCase() === 'c') clearCanvas();
+    else if (e.key.toLowerCase() === 'e') setTool('eraser');
+    else if (e.key.toLowerCase() === 'p') setTool('pen');
+    else if (e.key.toLowerCase() === 's') { e.preventDefault(); downloadCanvas(); }
+});
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+saveState();
+</script>
+{% endblock %}

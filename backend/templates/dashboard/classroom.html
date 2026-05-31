@@ -1,0 +1,556 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}Classroom: {{ classroom.name }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6 classroom-shell">
+    <section class="classroom-hero card fade-in" id="overview">
+        <div class="classroom-hero-copy">
+            <span class="landing-section-label">Classroom Workspace</span>
+            <h1>{{ classroom.name }}</h1>
+            <p>{{ classroom.subject }} for {{ classroom.department }} - Semester {{ classroom.semester }}. Stream, classwork, materials, recordings, roster, and AI study tools are managed from this single classroom hub.</p>
+            <div class="classroom-hero-meta">
+                <span class="metric-pill">{{ student_total }} student{{ student_total|pluralize }}</span>
+                <span class="metric-pill">Teacher: {{ classroom.teacher.get_full_name|default:classroom.teacher.username }}</span>
+                <span class="metric-pill">{{ schedules.count }} schedule slot{{ schedules.count|pluralize }}</span>
+            </div>
+            <nav class="classroom-tabbar" aria-label="Classroom sections">
+                <a href="#stream">Stream</a>
+                <a href="#classwork">Classwork</a>
+                <a href="#materials">Materials</a>
+                <a href="#people">People</a>
+            </nav>
+        </div>
+        <aside class="classroom-hero-panel">
+            <div>
+                <span class="ops-card-kicker">Class Code</span>
+                <div class="classroom-code-row">
+                    <strong id="classroomCode">{{ classroom.class_code }}</strong>
+                    <button class="btn btn-secondary btn-sm" type="button" onclick="navigator.clipboard && navigator.clipboard.writeText('{{ classroom.class_code }}')">Copy</button>
+                </div>
+            </div>
+            <div class="classroom-mini-grid">
+                <div>
+                    <span>Submission rate</span>
+                    <strong>{{ submission_rate }}%</strong>
+                </div>
+                <div>
+                    <span>Materials</span>
+                    <strong>{{ materials_total }}</strong>
+                </div>
+            </div>
+            {% if next_schedule %}
+            <p class="classroom-next-session">Next listed session: {{ next_schedule.get_day_of_week_display }} at {{ next_schedule.start_time|time:"H:i" }} in {{ next_schedule.room_number }}</p>
+            {% else %}
+            <p class="classroom-next-session">No timetable slot has been attached to this classroom yet.</p>
+            {% endif %}
+            {% if can_create_classwork %}
+            <div class="classroom-toolbar">
+                <button class="btn btn-primary" type="button" onclick="document.getElementById('createAssignmentModal').style.display='flex'">New Assignment</button>
+                <button class="btn btn-secondary" type="button" onclick="document.getElementById('createHomeworkModal').style.display='flex'">New Homework</button>
+                <button class="btn btn-secondary" type="button" onclick="document.getElementById('createRecordingModal').style.display='flex'">Add Recording</button>
+                <button class="btn btn-secondary" type="button" onclick="document.getElementById('uploadMaterialModal').style.display='flex'">Upload Material</button>
+                <button class="btn btn-secondary" type="button" onclick="document.getElementById('postNoticeModal').style.display='flex'">Share Notice</button>
+            </div>
+            {% elif can_moderate_classroom %}
+            <span class="metric-pill">Moderation enabled</span>
+            {% endif %}
+        </aside>
+    </section>
+
+    <section class="classroom-summary-grid">
+        <article class="ops-card tone-success">
+            <div class="ops-card-head">
+                <h4>Assignments</h4>
+                <span class="metric-pill">{{ active_assignments }}</span>
+            </div>
+            <p class="ops-card-detail">{{ submitted_total }} submission{{ submitted_total|pluralize }} across {{ assignment_total }} assignment{{ assignment_total|pluralize }}.</p>
+            <p class="ops-card-meta">Teachers can publish, review, and remove classwork from this classroom.</p>
+        </article>
+        <article class="ops-card tone-warning">
+            <div class="ops-card-head">
+                <h4>Homework</h4>
+                <span class="metric-pill">{{ upcoming_homework }}</span>
+            </div>
+            <p class="ops-card-detail">Upcoming homework items attached directly to this class.</p>
+            <p class="ops-card-meta">Daily practice stays visible beside assignments and recordings.</p>
+        </article>
+        <article class="ops-card tone-neutral">
+            <div class="ops-card-head">
+                <h4>Recordings</h4>
+                <span class="metric-pill">{{ recording_total }}</span>
+            </div>
+            <p class="ops-card-detail">Lesson replays and revision sessions available to students.</p>
+            <p class="ops-card-meta">Use them with materials for complete lesson follow-up.</p>
+        </article>
+        <article class="ops-card tone-neutral">
+            <div class="ops-card-head">
+                <h4>People</h4>
+                <span class="metric-pill">{{ student_total }}</span>
+            </div>
+            <p class="ops-card-detail">Roster, teacher ownership, and classroom access at a glance.</p>
+            <p class="ops-card-meta">Institution-scoped visibility keeps classes separated.</p>
+        </article>
+    </section>
+
+    {% if user.role == 'student' %}
+    <section class="classroom-summary-grid">
+        <article class="ops-card tone-success">
+            <div class="ops-card-head">
+                <h4>My Attendance</h4>
+                <span class="metric-pill">{{ student_stats.pct }}%</span>
+            </div>
+            <p class="ops-card-detail">Present {{ student_stats.present }} | Absent {{ student_stats.absent }} | Late {{ student_stats.late }}</p>
+            <p class="ops-card-meta">Attendance is calculated only from records in this classroom.</p>
+        </article>
+        <article class="ops-card tone-neutral">
+            <div class="ops-card-head">
+                <h4>Latest Grade</h4>
+                {% if grades %}
+                {% with latest=grades|first %}
+                <span class="metric-pill">{{ latest.marks_obtained|floatformat:0 }}/{{ latest.exam.total_marks }}</span>
+                {% endwith %}
+                {% else %}
+                <span class="metric-pill">No grade</span>
+                {% endif %}
+            </div>
+            {% if grades %}
+            {% with latest=grades|first %}
+            <p class="ops-card-detail">{{ latest.exam.title }}</p>
+            <p class="ops-card-meta">{{ latest.exam.date|date:"d M Y" }}</p>
+            {% endwith %}
+            {% else %}
+            <p class="ops-card-detail">No grade has been published yet for this classroom.</p>
+            <p class="ops-card-meta">Your results will appear here when teachers release them.</p>
+            {% endif %}
+        </article>
+    </section>
+    {% endif %}
+
+    <section class="classroom-stream-board" id="stream">
+        <article class="card classroom-column classroom-stream-column">
+            <div class="chart-header">
+                <div>
+                    <h3 class="chart-title">Class Stream</h3>
+                    <p class="chart-subtitle">Teacher notices, pinned updates, and classroom announcements.</p>
+                </div>
+                {% if can_create_classwork %}
+                <button class="btn btn-secondary btn-sm" type="button" onclick="document.getElementById('postNoticeModal').style.display='flex'">Post</button>
+                {% endif %}
+            </div>
+            <div class="classroom-item-list">
+                {% for notice in class_notices %}
+                <div class="classroom-item classroom-stream-item">
+                    <div>
+                        <span class="classroom-type-badge">Notice</span>
+                        <strong>{{ notice.title }}</strong>
+                        <p>{{ notice.content }}</p>
+                    </div>
+                    <div class="classroom-item-meta">
+                        <span class="metric-pill">{{ notice.created_at|date:"d M, H:i" }}</span>
+                        {% if notice.is_pinned %}<span class="metric-pill">Pinned</span>{% endif %}
+                        {% if can_moderate_classroom and notice.target_class_id %}
+                        <form method="post" class="inline-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete_notice">
+                            <input type="hidden" name="notice_id" value="{{ notice.id }}">
+                            <button class="btn btn-danger btn-sm" type="submit" onclick="return confirm('Delete this class notice?')">Delete</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted">No classroom notices have been posted yet.</p>
+                {% endfor %}
+            </div>
+        </article>
+
+        <aside class="card classroom-column classroom-side-panel">
+            <div class="chart-header">
+                <div>
+                    <h3 class="chart-title">Class Toolkit</h3>
+                    <p class="chart-subtitle">Fast actions for this classroom.</p>
+                </div>
+            </div>
+            <div class="classroom-quick-links">
+                <a href="{% url 'mark_attendance' %}" class="btn btn-secondary btn-sm">Attendance</a>
+                <a href="{% url 'grades' %}" class="btn btn-secondary btn-sm">Grades</a>
+                <a href="{{ ai_quiz_link }}" class="btn btn-primary btn-sm">AI Quiz Gen</a>
+                <a href="{% url 'inbox' %}" class="btn btn-secondary btn-sm">Message</a>
+            </div>
+            <div class="classroom-ai-panel">
+                <span class="classroom-type-badge">AI Quiz</span>
+                <p>Generate revision quizzes from {{ classroom.subject }} with difficulty and count controls.</p>
+                <a href="{{ ai_quiz_link }}" class="btn btn-primary btn-full">Open Generator</a>
+            </div>
+        </aside>
+    </section>
+
+    <section class="classroom-board" id="classwork">
+        <article class="card classroom-column">
+            <div class="chart-header">
+                <div>
+                    <h3 class="chart-title">Assignments</h3>
+                    <p class="chart-subtitle">Classwork tasks linked to this classroom.</p>
+                </div>
+                <a href="{% url 'assignments' %}" class="btn btn-secondary btn-sm">Open All</a>
+            </div>
+            <div class="classroom-item-list">
+                {% for assignment in assignments %}
+                <div class="classroom-item">
+                    <div>
+                        <span class="classroom-type-badge">Assignment</span>
+                        <strong>{{ assignment.title }}</strong>
+                        <p>{{ assignment.description|default:"No assignment description added yet."|truncatewords:18 }}</p>
+                    </div>
+                    <div class="classroom-item-meta">
+                        <span class="metric-pill">Due {{ assignment.due_date|date:"d M, H:i" }}</span>
+                        {% if user.role == 'student' %}
+                            {% if assignment.my_submission %}
+                                <span class="metric-pill">{% if assignment.my_submission.graded %}Graded{% else %}Submitted{% endif %}</span>
+                            {% else %}
+                                <span class="metric-pill">Pending</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="metric-pill">{{ assignment.submission_count }} submission{{ assignment.submission_count|pluralize }}</span>
+                        {% endif %}
+                        <a href="{% url 'assignment_detail' assignment.id %}" class="btn btn-primary btn-sm">{% if user.role == 'student' %}Open{% else %}Review{% endif %}</a>
+                        {% if can_moderate_classroom %}
+                        <form method="post" class="inline-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete_assignment">
+                            <input type="hidden" name="assignment_id" value="{{ assignment.id }}">
+                            <button class="btn btn-danger btn-sm" type="submit" onclick="return confirm('Delete this assignment from the classroom?')">Delete</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted">No assignments have been posted to this classroom yet.</p>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="card classroom-column">
+            <div class="chart-header">
+                <div>
+                    <h3 class="chart-title">Homework</h3>
+                    <p class="chart-subtitle">Daily practice and follow-up work for this class.</p>
+                </div>
+                <a href="{% url 'homework' %}" class="btn btn-secondary btn-sm">Open All</a>
+            </div>
+            <div class="classroom-item-list">
+                {% for item in homework_entries %}
+                <div class="classroom-item">
+                    <div>
+                        <span class="classroom-type-badge">Homework</span>
+                        <strong>{% if item.is_important %}Important homework{% else %}Homework task{% endif %}</strong>
+                        <p>{{ item.description|truncatewords:20 }}</p>
+                    </div>
+                    <div class="classroom-item-meta">
+                        <span class="metric-pill">Due {{ item.due_date|date:"d M Y" }}</span>
+                        {% if item.is_important %}
+                        <span class="metric-pill">Important</span>
+                        {% endif %}
+                        {% if can_moderate_classroom %}
+                        <form method="post" class="inline-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete_homework">
+                            <input type="hidden" name="homework_id" value="{{ item.id }}">
+                            <button class="btn btn-danger btn-sm" type="submit" onclick="return confirm('Delete this homework?')">Delete</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted">No homework has been added to this classroom yet.</p>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="card classroom-column">
+            <div class="chart-header">
+                <div>
+                    <h3 class="chart-title">Recordings</h3>
+                    <p class="chart-subtitle">Replay classroom explanations and revision sessions.</p>
+                </div>
+                <a href="{% url 'recordings' %}" class="btn btn-secondary btn-sm">Open All</a>
+            </div>
+            <div class="classroom-item-list">
+                {% for recording in recordings %}
+                <div class="classroom-item">
+                    <div>
+                        <span class="classroom-type-badge">Recording</span>
+                        <strong>{{ recording.title }}</strong>
+                        <p>{{ recording.description|default:"Class recording ready for replay."|truncatewords:18 }}</p>
+                    </div>
+                    <div class="classroom-item-meta">
+                        <span class="metric-pill">{{ recording.recording_date|date:"d M Y" }}</span>
+                        {% if recording.duration_minutes %}
+                        <span class="metric-pill">{{ recording.duration_minutes }} min</span>
+                        {% endif %}
+                        <a href="{{ recording.video_url }}" target="_blank" class="btn btn-primary btn-sm">Watch</a>
+                        {% if can_moderate_classroom %}
+                        <form method="post" class="inline-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete_recording">
+                            <input type="hidden" name="recording_id" value="{{ recording.id }}">
+                            <button class="btn btn-danger btn-sm" type="submit" onclick="return confirm('Delete this recording?')">Delete</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted">No recordings have been posted to this classroom yet.</p>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section class="classroom-stream-board" id="materials">
+        <article class="card classroom-column">
+            <div class="chart-header">
+                <div>
+                    <h3 class="chart-title">Study Materials</h3>
+                    <p class="chart-subtitle">Files and links shared with this class.</p>
+                </div>
+                {% if can_create_classwork %}
+                <button class="btn btn-secondary btn-sm" type="button" onclick="document.getElementById('uploadMaterialModal').style.display='flex'">Upload</button>
+                {% endif %}
+            </div>
+            <div class="classroom-item-list">
+                {% for material in materials %}
+                <div class="classroom-item">
+                    <div>
+                        <span class="classroom-type-badge">{% if material.file and material.url %}File and link{% elif material.file %}File{% else %}Link{% endif %}</span>
+                        <strong>{{ material.title }}</strong>
+                        <p>{{ material.description|default:"Resource shared in this classroom."|truncatewords:18 }}</p>
+                    </div>
+                    <div class="classroom-item-meta">
+                        <span class="metric-pill">{{ material.upload_date|date:"d M, H:i" }}</span>
+                        {% if material.file %}
+                        <a href="{{ material.file.url }}" target="_blank" class="btn btn-secondary btn-sm">Download</a>
+                        {% endif %}
+                        {% if material.url %}
+                        <a href="{{ material.url }}" target="_blank" class="btn btn-primary btn-sm">Open Link</a>
+                        {% endif %}
+                        {% if can_moderate_classroom %}
+                        <form method="post" class="inline-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete_material">
+                            <input type="hidden" name="material_id" value="{{ material.id }}">
+                            <button class="btn btn-danger btn-sm" type="submit" onclick="return confirm('Delete this study material?')">Delete</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted">No study materials have been posted yet.</p>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="card classroom-column" id="people">
+            <div class="chart-header">
+                <div>
+                    <h3 class="chart-title">People</h3>
+                    <p class="chart-subtitle">Teacher and enrolled students.</p>
+                </div>
+                <span class="metric-pill">{{ student_total }} enrolled</span>
+            </div>
+            <div class="classroom-roster">
+                <div class="classroom-person-row teacher-row">
+                    <div class="sidebar-user-avatar">{{ classroom.teacher.first_name|make_list|first|default:"T" }}{{ classroom.teacher.last_name|make_list|first|default:"" }}</div>
+                    <div>
+                        <strong>{{ classroom.teacher.get_full_name|default:classroom.teacher.username }}</strong>
+                        <span>Teacher</span>
+                    </div>
+                </div>
+                {% for student in student_roster %}
+                <div class="classroom-person-row">
+                    <div class="sidebar-user-avatar">{{ student.first_name|make_list|first|default:"S" }}{{ student.last_name|make_list|first|default:"" }}</div>
+                    <div>
+                        <strong>{{ student.get_full_name|default:student.username }}</strong>
+                        <span>{{ student.email|default:"No email on profile" }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted">No students are enrolled yet.</p>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section class="card classroom-column">
+        <div class="chart-header">
+            <div>
+                <h3 class="chart-title">Schedule</h3>
+                <p class="chart-subtitle">Timetable slots attached to this classroom.</p>
+            </div>
+            <a href="{% url 'timetable' %}" class="btn btn-secondary btn-sm">Open Timetable</a>
+        </div>
+        <div class="classroom-schedule-grid">
+            {% for slot in schedules %}
+            <div class="classroom-schedule-item">
+                <strong>{{ slot.get_day_of_week_display }}</strong>
+                <span>{{ slot.start_time|time:"H:i" }} - {{ slot.end_time|time:"H:i" }}</span>
+                <span>{{ slot.room_number }}</span>
+            </div>
+            {% empty %}
+            <p class="text-muted">No schedule has been created for this classroom yet.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    {% if can_create_classwork %}
+    <div id="createAssignmentModal" class="modal-overlay" style="display:none;">
+        <div class="card modal-card">
+            <div class="flex items-center justify-between" style="margin-bottom: 1.25rem;">
+                <h3 class="chart-title">Add Assignment</h3>
+                <button class="btn btn-secondary btn-sm" type="button" onclick="document.getElementById('createAssignmentModal').style.display='none'">Close</button>
+            </div>
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_assignment">
+                <div class="form-group">
+                    <label class="form-label">Title</label>
+                    <input type="text" name="title" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea name="description" class="form-input" rows="3"></textarea>
+                </div>
+                <div class="grid-2" style="gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Due Date</label>
+                        <input type="datetime-local" name="due_date" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Total Marks</label>
+                        <input type="number" name="total_marks" class="form-input" value="100">
+                    </div>
+                </div>
+                <label class="form-label" style="display:flex; align-items:center; gap:0.5rem;">
+                    <input type="checkbox" name="allow_late">
+                    <span>Allow late submissions</span>
+                </label>
+                <button type="submit" class="btn btn-primary btn-full">Save Assignment</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="createHomeworkModal" class="modal-overlay" style="display:none;">
+        <div class="card modal-card">
+            <div class="flex items-center justify-between" style="margin-bottom: 1.25rem;">
+                <h3 class="chart-title">Add Homework</h3>
+                <button class="btn btn-secondary btn-sm" type="button" onclick="document.getElementById('createHomeworkModal').style.display='none'">Close</button>
+            </div>
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_homework">
+                <div class="form-group">
+                    <label class="form-label">Homework Details</label>
+                    <textarea name="description" class="form-input" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Due Date</label>
+                    <input type="date" name="due_date" class="form-input" required>
+                </div>
+                <label class="form-label" style="display:flex; align-items:center; gap:0.5rem;">
+                    <input type="checkbox" name="is_important">
+                    <span>Mark as important</span>
+                </label>
+                <button type="submit" class="btn btn-primary btn-full">Save Homework</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="createRecordingModal" class="modal-overlay" style="display:none;">
+        <div class="card modal-card">
+            <div class="flex items-center justify-between" style="margin-bottom: 1.25rem;">
+                <h3 class="chart-title">Add Recording</h3>
+                <button class="btn btn-secondary btn-sm" type="button" onclick="document.getElementById('createRecordingModal').style.display='none'">Close</button>
+            </div>
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_recording">
+                <div class="form-group">
+                    <label class="form-label">Title</label>
+                    <input type="text" name="title" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Video URL</label>
+                    <input type="url" name="video_url" class="form-input" required>
+                </div>
+                <div class="grid-2" style="gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Recording Date</label>
+                        <input type="date" name="recording_date" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Duration (minutes)</label>
+                        <input type="number" name="duration_minutes" class="form-input" value="45">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea name="description" class="form-input" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Save Recording</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="uploadMaterialModal" class="modal-overlay" style="display:none;">
+        <div class="card modal-card">
+            <div class="flex items-center justify-between" style="margin-bottom: 1.25rem;">
+                <h3 class="chart-title">Upload Study Material</h3>
+                <button class="btn btn-secondary btn-sm" type="button" onclick="document.getElementById('uploadMaterialModal').style.display='none'">Close</button>
+            </div>
+            <form method="post" enctype="multipart/form-data" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="upload_material">
+                <div class="form-group">
+                    <label class="form-label">Title</label>
+                    <input type="text" name="title" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea name="description" rows="2" class="form-input"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">File Upload</label>
+                    <input type="file" name="file" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Or External Link</label>
+                    <input type="url" name="url" class="form-input" placeholder="https://">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Share Material</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="postNoticeModal" class="modal-overlay" style="display:none;">
+        <div class="card modal-card">
+            <div class="flex items-center justify-between" style="margin-bottom: 1.25rem;">
+                <h3 class="chart-title">Share Class Notice</h3>
+                <button class="btn btn-secondary btn-sm" type="button" onclick="document.getElementById('postNoticeModal').style.display='none'">Close</button>
+            </div>
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="post_notice">
+                <div class="form-group">
+                    <label class="form-label">Title</label>
+                    <input type="text" name="title" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notice</label>
+                    <textarea name="content" required rows="4" class="form-input"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Post Notice</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

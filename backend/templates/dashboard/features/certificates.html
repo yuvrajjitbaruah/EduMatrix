@@ -1,0 +1,52 @@
+{% extends 'dashboard/layout.html' %}
+{% block title %}Certificates | EduMatrix{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1 class="page-title">🏆 Certificates</h1><p class="page-subtitle">Issue and view certificates — {{ total }} total</p></div></div>
+
+{% if user.role in 'admin teacher' %}
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">Issue Certificate</h3></div>
+    <div class="card-body">
+        <form method="post" class="form-grid form-grid-2">
+            {% csrf_token %}<input type="hidden" name="action" value="create">
+            <div class="form-group"><label class="form-label">Student</label><select name="student_id" class="form-input" required>{% for s in students %}<option value="{{ s.id }}">{{ s.get_full_name|default:s.username }}</option>{% endfor %}</select></div>
+            <div class="form-group"><label class="form-label">Type</label><select name="certificate_type" class="form-input"><option value="merit">🏅 Merit</option><option value="participation">🎗️ Participation</option><option value="completion">✅ Completion</option><option value="excellence">🌟 Excellence</option><option value="sports">⚽ Sports</option><option value="other">📜 Other</option></select></div>
+            <div class="form-group"><label class="form-label">Title</label><input type="text" name="title" class="form-input" required placeholder="e.g. Best Performer in Science Fair"></div>
+            <div class="form-group"><label class="form-label">Description</label><input type="text" name="description" class="form-input" placeholder="Certificate details..."></div>
+            <div class="form-group" style="grid-column:span 2;"><button type="submit" class="btn btn-primary">🏆 Issue Certificate</button></div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header"><h3 class="card-title">Certificates</h3></div>
+    <div class="card-body">
+        <div class="grid-responsive">
+            {% for cert in certs %}
+            <div class="feature-card" style="border-top:3px solid {% if cert.certificate_type == 'excellence' %}#f59e0b{% elif cert.certificate_type == 'merit' %}var(--primary-500){% elif cert.certificate_type == 'sports' %}#10b981{% else %}var(--purple-500){% endif %};">
+                <div style="display:flex;justify-content:space-between;align-items:start;">
+                    <div>
+                        <span style="font-size:2rem;">{% if cert.certificate_type == 'merit' %}🏅{% elif cert.certificate_type == 'excellence' %}🌟{% elif cert.certificate_type == 'sports' %}⚽{% elif cert.certificate_type == 'completion' %}✅{% elif cert.certificate_type == 'participation' %}🎗️{% else %}📜{% endif %}</span>
+                        <h4 style="color:var(--text-primary);font-weight:600;margin-top:.5rem;">{{ cert.title }}</h4>
+                    </div>
+                    <span class="badge badge-info">{{ cert.get_certificate_type_display }}</span>
+                </div>
+                {% if cert.description %}<p style="font-size:.85rem;color:var(--text-secondary);margin:.5rem 0;">{{ cert.description }}</p>{% endif %}
+                <div style="font-size:.8rem;color:var(--text-muted);margin-top:.5rem;">
+                    {% if user.role != 'student' %}<span>Student: {{ cert.student.get_full_name|default:cert.student.username }}</span><br>{% endif %}
+                    <span>Issued by: {{ cert.issued_by.get_full_name|default:cert.issued_by.username }}</span>
+                    <br><span>Date: {{ cert.issued_date }}</span>
+                    <br><span style="font-family:monospace;color:var(--text-muted);">SN: CERT-{{ cert.serial_number }}</span>
+                </div>
+                {% if user.role in 'admin teacher' %}
+                <form method="post" style="margin-top:.75rem;text-align:right;">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="cert_id" value="{{ cert.id }}"><button type="submit" class="btn btn-ghost btn-sm" onclick="return confirm('Delete?')">🗑️</button></form>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="empty-state" style="grid-column:1/-1;"><div class="empty-state-icon">🏆</div><h3>No certificates</h3></div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}My Notes{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between" style="flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1 class="page-title">Quick Notes 📝</h1>
+            <p class="page-subtitle">Your personal notebook — {{ notes|length }} note{{ notes|length|pluralize }}</p>
+        </div>
+        <button class="btn btn-primary" onclick="document.getElementById('noteModal').style.display='flex'">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New Note
+        </button>
+    </div>
+
+    <!-- Notes Grid -->
+    <div class="grid-3">
+        {% for note in notes %}
+        <div class="card fade-in note-card note-{{ note.color }}" style="border-top: 3px solid {% if note.color == 'indigo' %}var(--indigo-500){% elif note.color == 'rose' %}var(--rose-500){% elif note.color == 'emerald' %}var(--emerald-500){% elif note.color == 'amber' %}var(--amber-500){% elif note.color == 'cyan' %}var(--cyan-500){% else %}var(--purple-500){% endif %}; position: relative;">
+            {% if note.is_pinned %}
+            <div style="position: absolute; top: 0.75rem; right: 0.75rem; font-size: 0.875rem;">📌</div>
+            {% endif %}
+            <h4 style="font-size: 1rem; font-weight: 800; margin-bottom: 0.5rem; padding-right: 1.5rem;">{{ note.title }}</h4>
+            <p style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 0.75rem; white-space: pre-wrap; overflow: hidden; max-height: 7.5rem;">{{ note.content|truncatewords:40 }}</p>
+            <div class="flex items-center justify-between" style="padding-top: 0.5rem; border-top: 1px solid var(--border-subtle);">
+                <span style="font-size: 0.6875rem; color: var(--text-muted);">{{ note.updated_at|timesince }} ago</span>
+                <div class="flex items-center gap-1">
+                    <form method="POST" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="pin">
+                        <input type="hidden" name="note_id" value="{{ note.id }}">
+                        <button type="submit" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; padding: 0.25rem; color: var(--text-muted);" title="{% if note.is_pinned %}Unpin{% else %}Pin{% endif %}">📌</button>
+                    </form>
+                    <form method="POST" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="note_id" value="{{ note.id }}">
+                        <button type="submit" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; padding: 0.25rem; color: var(--rose-500);" title="Delete">🗑️</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div style="grid-column: 1 / -1;">
+            <div class="card" style="text-align: center; padding: 3rem;">
+                <p style="font-size: 2rem; margin-bottom: 0.5rem;">📝</p>
+                <p style="color: var(--text-muted);">No notes yet. Create your first note!</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- New Note Modal -->
+<div id="noteModal" class="modal-overlay" style="display: none;">
+    <div class="card modal-card">
+        <div class="flex items-center justify-between" style="margin-bottom: 1.5rem;">
+            <h3 style="font-size: 1.25rem; font-weight: 800;">✏️ New Note</h3>
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('noteModal').style.display='none'">✕</button>
+        </div>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+            <div class="form-group">
+                <label class="form-label">Title</label>
+                <input type="text" name="title" class="form-input" placeholder="Note title..." required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Content</label>
+                <textarea name="content" class="form-input" rows="6" placeholder="Write your note here..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Color</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <label style="cursor: pointer;"><input type="radio" name="color" value="indigo" checked style="display: none;"><span class="note-color-dot" style="background: var(--indigo-500);"></span></label>
+                    <label style="cursor: pointer;"><input type="radio" name="color" value="rose" style="display: none;"><span class="note-color-dot" style="background: var(--rose-500);"></span></label>
+                    <label style="cursor: pointer;"><input type="radio" name="color" value="emerald" style="display: none;"><span class="note-color-dot" style="background: var(--emerald-500);"></span></label>
+                    <label style="cursor: pointer;"><input type="radio" name="color" value="amber" style="display: none;"><span class="note-color-dot" style="background: var(--amber-500);"></span></label>
+                    <label style="cursor: pointer;"><input type="radio" name="color" value="cyan" style="display: none;"><span class="note-color-dot" style="background: var(--cyan-500);"></span></label>
+                    <label style="cursor: pointer;"><input type="radio" name="color" value="purple" style="display: none;"><span class="note-color-dot" style="background: var(--purple-500);"></span></label>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Save Note</button>
+        </form>
+    </div>
+</div>
+
+<style>
+.note-color-dot { display: inline-block; width: 2rem; height: 2rem; border-radius: 50%; border: 3px solid transparent; transition: all 0.2s; }
+input[type="radio"]:checked + .note-color-dot { border-color: var(--text-primary); transform: scale(1.15); box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+.note-card { transition: all 0.3s ease; }
+.note-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-card-hover); }
+</style>
+{% endblock %}

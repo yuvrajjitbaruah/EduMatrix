@@ -1,0 +1,202 @@
+{% extends 'dashboard/layout.html' %}
+
+{% block title %}Flashcards | EduMatrix{% endblock %}
+
+{% block content %}
+{% if study_deck %}
+<!-- STUDY MODE -->
+<div class="page-header">
+    <div>
+        <h1 class="page-title">🃏 Study: {{ study_deck.title }}</h1>
+        <p class="page-subtitle">{{ study_deck.card_count }} cards • Tap card to flip</p>
+    </div>
+    <a href="{% url 'flashcards' %}" class="btn btn-ghost">← Back to Decks</a>
+</div>
+
+<div id="flashcardApp" style="max-width: 600px; margin: 0 auto;">
+    <div class="card" style="min-height: 320px; cursor: pointer; perspective: 1000px;" onclick="flipCard()">
+        <div id="flashcardInner" style="position: relative; width: 100%; height: 100%; min-height: 300px; transition: transform 0.6s; transform-style: preserve-3d;">
+            <div id="cardFront" style="position: absolute; inset: 0; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center;">
+                <span style="font-size: .8rem; color: var(--text-muted); margin-bottom: 1rem;">QUESTION</span>
+                <p id="frontText" style="font-size: 1.4rem; font-weight: 600; color: var(--text-primary);"></p>
+                <span id="diffBadge" class="badge" style="margin-top: 1rem;"></span>
+            </div>
+            <div id="cardBack" style="position: absolute; inset: 0; backface-visibility: hidden; transform: rotateY(180deg); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center; background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(168,85,247,0.05)); border-radius: var(--radius-lg);">
+                <span style="font-size: .8rem; color: var(--text-muted); margin-bottom: 1rem;">ANSWER</span>
+                <p id="backText" style="font-size: 1.3rem; color: var(--text-primary);"></p>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem; align-items: center;">
+        <button onclick="prevCard()" class="btn btn-ghost" id="prevBtn">← Previous</button>
+        <span id="cardCounter" style="color: var(--text-muted); font-weight: 600; min-width: 60px; text-align: center;"></span>
+        <button onclick="nextCard()" class="btn btn-primary" id="nextBtn">Next →</button>
+    </div>
+
+    <div style="margin-top: 1rem; text-align: center;">
+        <div style="background: var(--bg-card); border-radius: 999px; height: 8px; overflow: hidden;">
+            <div id="progressBar" style="height: 100%; background: linear-gradient(90deg, var(--primary-500), var(--purple-500)); transition: width .3s; border-radius: 999px;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+const cards = {{ study_cards_json|safe }};
+let current = 0;
+let flipped = false;
+
+function showCard() {
+    if (cards.length === 0) return;
+    const c = cards[current];
+    document.getElementById('frontText').textContent = c.front;
+    document.getElementById('backText').textContent = c.back;
+    document.getElementById('cardCounter').textContent = (current+1) + ' / ' + cards.length;
+    document.getElementById('diffBadge').textContent = c.difficulty;
+    document.getElementById('diffBadge').className = 'badge ' + (c.difficulty === 'easy' ? 'badge-success' : c.difficulty === 'hard' ? 'badge-danger' : 'badge-warning');
+    document.getElementById('progressBar').style.width = ((current+1)/cards.length*100) + '%';
+    if (flipped) flipCard();
+}
+
+function flipCard() {
+    flipped = !flipped;
+    document.getElementById('flashcardInner').style.transform = flipped ? 'rotateY(180deg)' : '';
+}
+
+function nextCard() {
+    if (current < cards.length - 1) { current++; flipped = false; showCard(); }
+}
+function prevCard() {
+    if (current > 0) { current--; flipped = false; showCard(); }
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') nextCard();
+    else if (e.key === 'ArrowLeft') prevCard();
+    else if (e.key === ' ') { e.preventDefault(); flipCard(); }
+});
+
+showCard();
+</script>
+
+{% else %}
+<!-- DECK LIST VIEW -->
+<div class="page-header">
+    <div>
+        <h1 class="page-title">🃏 Flashcards</h1>
+        <p class="page-subtitle">Create and study flashcard decks • {{ total_cards }} total cards</p>
+    </div>
+</div>
+
+<!-- Create Deck -->
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">Create New Deck</h3></div>
+    <div class="card-body">
+        <form method="post" class="form-grid form-grid-2">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_deck">
+            <div class="form-group">
+                <label class="form-label">Deck Title</label>
+                <input type="text" name="title" class="form-input" placeholder="e.g. Physics Ch 5" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Subject</label>
+                <input type="text" name="subject" class="form-input" placeholder="e.g. Physics">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <input type="text" name="description" class="form-input" placeholder="Brief description...">
+            </div>
+            <div class="form-group" style="display: flex; align-items: flex-end; gap: 1rem;">
+                <label style="display: flex; align-items: center; gap: .5rem; cursor: pointer; white-space: nowrap;">
+                    <input type="checkbox" name="is_public" style="width: 18px; height: 18px;">
+                    <span class="form-label" style="margin:0;">Public</span>
+                </label>
+                <button type="submit" class="btn btn-primary" style="flex:1;">Create Deck</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- My Decks -->
+<div class="card mb-6">
+    <div class="card-header"><h3 class="card-title">My Decks</h3></div>
+    <div class="card-body">
+        <div class="grid-responsive">
+            {% for deck in my_decks %}
+            <div class="feature-card">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: .75rem;">
+                    <div>
+                        <h4 style="color: var(--text-primary); font-weight: 600;">{{ deck.title }}</h4>
+                        {% if deck.subject %}<span class="badge badge-info">{{ deck.subject }}</span>{% endif %}
+                    </div>
+                    <span class="badge badge-ghost">{{ deck.card_count }} cards</span>
+                </div>
+                {% if deck.description %}<p style="font-size: .85rem; color: var(--text-muted); margin-bottom: .75rem;">{{ deck.description }}</p>{% endif %}
+
+                <!-- Add Card Form -->
+                <details style="margin-bottom: .75rem;">
+                    <summary style="cursor: pointer; font-size: .85rem; color: var(--primary-400);">+ Add Card</summary>
+                    <form method="post" style="margin-top: .5rem;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add_card">
+                        <input type="hidden" name="deck_id" value="{{ deck.id }}">
+                        <input type="text" name="front" class="form-input" placeholder="Front (Question)" required style="margin-bottom: .5rem;">
+                        <input type="text" name="back" class="form-input" placeholder="Back (Answer)" required style="margin-bottom: .5rem;">
+                        <select name="difficulty" class="form-input" style="margin-bottom: .5rem;">
+                            <option value="easy">Easy</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm" style="width:100%;">Add Card</button>
+                    </form>
+                </details>
+
+                <div style="display: flex; gap: .5rem;">
+                    {% if deck.card_count > 0 %}
+                    <a href="?study={{ deck.id }}" class="btn btn-primary btn-sm" style="flex:1;">📖 Study</a>
+                    {% endif %}
+                    <form method="post" style="margin:0;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_deck">
+                        <input type="hidden" name="deck_id" value="{{ deck.id }}">
+                        <button type="submit" class="btn btn-ghost btn-sm" onclick="return confirm('Delete this deck?')">🗑️</button>
+                    </form>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state" style="grid-column: 1 / -1;">
+                <div class="empty-state-icon">🃏</div>
+                <h3>No decks yet</h3>
+                <p>Create your first flashcard deck above!</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% if public_decks %}
+<!-- Public Decks -->
+<div class="card">
+    <div class="card-header"><h3 class="card-title">🌐 Public Decks</h3></div>
+    <div class="card-body">
+        <div class="grid-responsive">
+            {% for deck in public_decks %}
+            <div class="feature-card">
+                <h4 style="color: var(--text-primary); font-weight: 600;">{{ deck.title }}</h4>
+                <div style="display: flex; gap: .5rem; margin: .5rem 0;">
+                    {% if deck.subject %}<span class="badge badge-info">{{ deck.subject }}</span>{% endif %}
+                    <span class="badge badge-ghost">{{ deck.card_count }} cards</span>
+                    <span class="badge badge-ghost">by {{ deck.created_by.username }}</span>
+                </div>
+                {% if deck.card_count > 0 %}
+                <a href="?study={{ deck.id }}" class="btn btn-primary btn-sm" style="width: 100%;">📖 Study</a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,179 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}Users{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="page-title">Users</h1>
+            <p class="page-subtitle">Manage institution users, roles, and account access{% if institution_name %} for {{ institution_name }}{% endif %}.</p>
+        </div>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <form method="get" action="{% url 'users_list' %}" style="display: flex; gap: 0.5rem; align-items: center; margin: 0;">
+                <select name="department" onchange="this.form.submit()" style="padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border-subtle); background: var(--surface-bg); color: var(--text-main); outline: none;">
+                    <option value="">All Branches</option>
+                    {% for d in departments_list %}
+                    <option value="{{ d }}" {% if d == selected_department %}selected{% endif %}>{{ d }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+            {% if can_manage_users %}
+            <button class="btn btn-primary" onclick="document.getElementById('addUserModal').style.display='flex'">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                Add User
+            </button>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Department</th>
+                        <th>Email</th>
+                        {% if can_manage_users %}
+                        <th style="text-align: right;">Actions</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users_list %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'public_profile' u.id %}" style="text-decoration: none;" class="flex items-center gap-3">
+                                <div style="width: 2.25rem; height: 2.25rem; border-radius: 0.75rem; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 0.75rem; flex-shrink: 0;
+                                    background: {% if u.role == 'admin' %}linear-gradient(135deg, var(--rose-500), var(--pink-500)){% elif u.role == 'institution_admin' %}linear-gradient(135deg, var(--amber-500), var(--rose-500)){% elif u.role == 'teacher' %}linear-gradient(135deg, var(--indigo-500), var(--purple-500)){% else %}linear-gradient(135deg, var(--emerald-500), var(--cyan-500)){% endif %};">
+                                    {% if u.profile_picture %}
+                                        <img src="{{ u.profile_picture.url }}" alt="{{ u.username }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    {% else %}
+                                        {{ u.first_name|make_list|first|default:"U" }}{{ u.last_name|make_list|first|default:"" }}
+                                    {% endif %}
+                                </div>
+                                <span style="font-weight: 600; color: var(--text-main);">{{ u.get_full_name|default:u.username }}</span>
+                            </a>
+                        </td>
+                        <td style="color: var(--text-muted);">{{ u.username }}</td>
+                        <td>
+                            <span class="badge {% if u.role == 'admin' %}badge-absent{% elif u.role == 'institution_admin' %}badge-warning{% elif u.role == 'teacher' %}badge-pending{% else %}badge-present{% endif %}">
+                                {{ u.get_role_display }}
+                            </span>
+                        </td>
+                        <td>{{ u.department|default:"-" }}</td>
+                        <td style="color: var(--text-muted);">{{ u.email|default:"-" }}</td>
+                        {% if can_manage_users %}
+                        <td style="text-align: right;">
+                            <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                                <button class="btn btn-secondary" style="padding: 0.25rem 0.625rem; font-size: 0.75rem;" onclick="openEditUserModal({{ u.id }}, '{{ u.role }}')">Edit</button>
+                                <form method="post" action="{% url 'users_list' %}" onsubmit="return confirm('Are you sure you want to delete {{ u.username }}?');" style="margin:0;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="user_id" value="{{ u.id }}">
+                                    <button type="submit" class="btn" style="padding: 0.25rem 0.625rem; font-size: 0.75rem; background: var(--red-500); color: white;">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if can_manage_users %}
+    <div id="addUserModal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 1rem;">
+        <div class="card" style="width: 100%; max-width: 28rem; padding: 0; overflow: hidden; border: 1px solid var(--border-light);">
+            <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
+                <h3 style="font-weight: 700;">Add New User</h3>
+                <button onclick="document.getElementById('addUserModal').style.display='none'" style="background: none; border: none; color: var(--text-muted); cursor: pointer;">x</button>
+            </div>
+            <form method="post" action="{% url 'users_list' %}" style="padding: 1.5rem;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add">
+                <div class="grid-2" style="gap: 1rem; margin-bottom: 1rem;">
+                    <div class="form-group">
+                        <label style="display: block; font-size: 0.8125rem; font-weight: 600; margin-bottom: 0.5rem;">First Name</label>
+                        <input type="text" name="first_name" style="width: 100%; padding: 0.625rem; border-radius: 0.5rem; border: 1px solid var(--border-subtle); background: var(--surface-light); color: var(--text-main); outline: none;">
+                    </div>
+                    <div class="form-group">
+                        <label style="display: block; font-size: 0.8125rem; font-weight: 600; margin-bottom: 0.5rem;">Last Name</label>
+                        <input type="text" name="last_name" style="width: 100%; padding: 0.625rem; border-radius: 0.5rem; border: 1px solid var(--border-subtle); background: var(--surface-light); color: var(--text-main); outline: none;">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.8125rem; font-weight: 600; margin-bottom: 0.5rem;">Username</label>
+                    <input type="text" name="username" required style="width: 100%; padding: 0.625rem; border-radius: 0.5rem; border: 1px solid var(--border-subtle); background: var(--surface-light); color: var(--text-main); outline: none;">
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Default password will be: <code>password123</code></p>
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.8125rem; font-weight: 600; margin-bottom: 0.5rem;">Email</label>
+                    <input type="email" name="email" required style="width: 100%; padding: 0.625rem; border-radius: 0.5rem; border: 1px solid var(--border-subtle); background: var(--surface-light); color: var(--text-main); outline: none;">
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.8125rem; font-weight: 600; margin-bottom: 0.5rem;">Department</label>
+                    <select name="department" style="width: 100%; padding: 0.625rem; border-radius: 0.5rem; border: 1px solid var(--border-subtle); background: var(--surface-light); color: var(--text-main); outline: none;">
+                        <option value="">No department</option>
+                        {% for d in departments_list %}
+                        <option value="{{ d }}">{{ d }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="display: block; font-size: 0.8125rem; font-weight: 600; margin-bottom: 0.5rem;">Role</label>
+                    <select name="role" style="width: 100%; padding: 0.625rem; border-radius: 0.5rem; border: 1px solid var(--border-subtle); background: var(--surface-light); color: var(--text-main); outline: none;">
+                        {% for role_name in role_options %}
+                        <option value="{{ role_name }}">
+                            {% if role_name == 'institution_admin' %}Institution Admin{% elif role_name == 'admin' %}Administrator{% else %}{{ role_name|title }}{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('addUserModal').style.display='none'">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="editUserModal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 1rem;">
+        <div class="card" style="width: 100%; max-width: 28rem; padding: 0; overflow: hidden; border: 1px solid var(--border-light);">
+            <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
+                <h3 style="font-weight: 700;">Edit User Role</h3>
+                <button onclick="document.getElementById('editUserModal').style.display='none'" style="background: none; border: none; color: var(--text-muted); cursor: pointer;">x</button>
+            </div>
+            <form method="post" action="{% url 'users_list' %}" style="padding: 1.5rem;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" name="user_id" id="edit_user_id" value="">
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="display: block; font-size: 0.8125rem; font-weight: 600; margin-bottom: 0.5rem;">Change Role</label>
+                    <select name="role" id="edit_user_role" style="width: 100%; padding: 0.625rem; border-radius: 0.5rem; border: 1px solid var(--border-subtle); background: var(--surface-light); color: var(--text-main); outline: none;">
+                        {% for role_name in role_options %}
+                        <option value="{{ role_name }}">
+                            {% if role_name == 'institution_admin' %}Institution Admin{% elif role_name == 'admin' %}Administrator{% else %}{{ role_name|title }}{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('editUserModal').style.display='none'">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    function openEditUserModal(id, currentRole) {
+        document.getElementById('edit_user_id').value = id;
+        document.getElementById('edit_user_role').value = currentRole;
+        document.getElementById('editUserModal').style.display = 'flex';
+    }
+    </script>
+    {% endif %}
+</div>
+{% endblock %}

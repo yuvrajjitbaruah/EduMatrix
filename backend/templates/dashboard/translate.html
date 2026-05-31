@@ -1,0 +1,200 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}Translate{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div>
+        <h1 class="page-title">Language Translator 🌐</h1>
+        <p class="page-subtitle">Translate between Indian languages for classroom and study workflows.</p>
+    </div>
+
+    <div class="grid-2" style="gap: 1.5rem;">
+        <!-- Source -->
+        <div class="card fade-in">
+            <div class="flex items-center justify-between" style="margin-bottom: 1rem;">
+                <label class="form-label" style="margin-bottom: 0;">From</label>
+                <select id="sourceLang" class="form-input" style="width: auto; min-width: 8rem; margin-bottom: 0; font-size: 0.8125rem;">
+                    {% for code, name in languages.items %}
+                    <option value="{{ code }}" {% if code == 'en-IN' %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <textarea id="sourceText" class="form-input" rows="8" placeholder="Type or paste text here..." style="resize: vertical; font-size: 0.9375rem; line-height: 1.7;"></textarea>
+            <div class="flex items-center justify-between" style="margin-top: 0.75rem;">
+                <span id="charCount" style="font-size: 0.75rem; color: var(--text-muted);">0 / 500 chars</span>
+                <div class="flex items-center gap-2">
+                    <button onclick="speakSource()" class="btn btn-secondary btn-sm" title="Listen">🔊</button>
+                    <button onclick="swapLangs()" class="btn btn-secondary btn-sm" title="Swap Languages">⇄</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Target -->
+        <div class="card fade-in fade-delay-1">
+            <div class="flex items-center justify-between" style="margin-bottom: 1rem;">
+                <label class="form-label" style="margin-bottom: 0;">To</label>
+                <select id="targetLang" class="form-input" style="width: auto; min-width: 8rem; margin-bottom: 0; font-size: 0.8125rem;">
+                    {% for code, name in languages.items %}
+                    <option value="{{ code }}" {% if code == 'hi-IN' %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div id="translatedOutput" style="min-height: 12rem; padding: 0.75rem 1rem; border-radius: 0.75rem; border: 1px solid var(--border-subtle); background: rgba(148,163,184,0.04); font-size: 0.9375rem; line-height: 1.7; color: var(--text-primary); white-space: pre-wrap;">
+                <span style="color: var(--text-muted);">Translation will appear here...</span>
+            </div>
+            <div class="flex items-center justify-between" style="margin-top: 0.75rem;">
+                <span id="translationStatus" style="font-size: 0.75rem; color: var(--text-muted);"></span>
+                <div class="flex items-center gap-2">
+                    <button onclick="speakTarget()" class="btn btn-secondary btn-sm" title="Listen to translation">🔊</button>
+                    <button onclick="copyTranslation()" class="btn btn-secondary btn-sm" title="Copy">📋</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align: center;">
+        <button onclick="translateText()" id="translateBtn" class="btn btn-primary" style="min-width: 200px;">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2v3"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg>
+            Translate
+        </button>
+    </div>
+
+    <!-- Text-to-Speech Section -->
+    <div class="card fade-in fade-delay-2">
+        <h3 style="font-size: 1.125rem; font-weight: 800; margin-bottom: 1rem;">🔊 Text-to-Speech</h3>
+        <p style="font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 1rem;">Convert text to natural-sounding Indian language speech for accessible learning.</p>
+        <div class="grid-2" style="gap: 1rem;">
+            <div class="form-group">
+                <label class="form-label">Text to Speak</label>
+                <textarea id="ttsText" class="form-input" rows="3" placeholder="Enter text to convert to speech..."></textarea>
+            </div>
+            <div>
+                <div class="form-group">
+                    <label class="form-label">Language</label>
+                    <select id="ttsLang" class="form-input">
+                        {% for code, name in languages.items %}
+                        <option value="{{ code }}" {% if code == 'hi-IN' %}selected{% endif %}>{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button onclick="textToSpeech()" class="btn btn-primary btn-full" id="ttsBtn">
+                    🔊 Generate Speech
+                </button>
+            </div>
+        </div>
+        <div id="audioContainer" style="display: none; margin-top: 1rem;">
+            <audio id="audioPlayer" controls style="width: 100%; border-radius: 0.75rem;"></audio>
+        </div>
+    </div>
+</div>
+
+<script>
+const csrfToken = '{{ csrf_token }}';
+
+document.getElementById('sourceText').addEventListener('input', function() {
+    document.getElementById('charCount').textContent = this.value.length + ' / 500 chars';
+});
+
+async function translateText() {
+    const text = document.getElementById('sourceText').value.trim();
+    if (!text) return alert('Please enter text to translate');
+
+    const btn = document.getElementById('translateBtn');
+    btn.disabled = true;
+    btn.textContent = 'Translating...';
+    document.getElementById('translationStatus').textContent = 'Translating...';
+
+    try {
+        const formData = new FormData();
+        formData.append('text', text);
+        formData.append('source_lang', document.getElementById('sourceLang').value);
+        formData.append('target_lang', document.getElementById('targetLang').value);
+
+        const res = await fetch('{% url "translate_api" %}', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken },
+            body: formData,
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            document.getElementById('translatedOutput').textContent = data.translated_text;
+            document.getElementById('translationStatus').textContent = '✓ Translated';
+        } else {
+            document.getElementById('translatedOutput').innerHTML = '<span style="color: var(--rose-500);">⚠️ ' + (data.error || 'Translation failed') + '</span>';
+            document.getElementById('translationStatus').textContent = '';
+        }
+    } catch (err) {
+        document.getElementById('translatedOutput').innerHTML = '<span style="color: var(--rose-500);">⚠️ Network error</span>';
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2v3"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg> Translate';
+}
+
+function swapLangs() {
+    const s = document.getElementById('sourceLang');
+    const t = document.getElementById('targetLang');
+    const tmp = s.value;
+    s.value = t.value;
+    t.value = tmp;
+    const srcText = document.getElementById('sourceText').value;
+    const tgtText = document.getElementById('translatedOutput').textContent;
+    if (tgtText && !tgtText.includes('Translation will')) {
+        document.getElementById('sourceText').value = tgtText;
+        document.getElementById('translatedOutput').textContent = srcText;
+    }
+}
+
+function copyTranslation() {
+    const text = document.getElementById('translatedOutput').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        document.getElementById('translationStatus').textContent = '✓ Copied!';
+        setTimeout(() => { document.getElementById('translationStatus').textContent = ''; }, 2000);
+    });
+}
+
+async function textToSpeech() {
+    const text = document.getElementById('ttsText').value.trim();
+    if (!text) return alert('Please enter text');
+
+    const btn = document.getElementById('ttsBtn');
+    btn.disabled = true;
+    btn.textContent = 'Generating...';
+
+    try {
+        const formData = new FormData();
+        formData.append('text', text);
+        formData.append('language', document.getElementById('ttsLang').value);
+
+        const res = await fetch('{% url "tts_api" %}', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken },
+            body: formData,
+        });
+        const data = await res.json();
+
+        if (data.success && data.audio_base64) {
+            const audio = document.getElementById('audioPlayer');
+            audio.src = 'data:audio/wav;base64,' + data.audio_base64;
+            document.getElementById('audioContainer').style.display = 'block';
+            audio.play();
+        } else {
+            alert(data.error || 'TTS failed');
+        }
+    } catch (err) {
+        alert('Network error');
+    }
+    btn.disabled = false;
+    btn.textContent = '🔊 Generate Speech';
+}
+
+async function speakSource() {
+    const text = document.getElementById('sourceText').value.trim();
+    if (text) { document.getElementById('ttsText').value = text; document.getElementById('ttsLang').value = document.getElementById('sourceLang').value; textToSpeech(); }
+}
+async function speakTarget() {
+    const text = document.getElementById('translatedOutput').textContent.trim();
+    if (text && !text.includes('Translation will')) { document.getElementById('ttsText').value = text; document.getElementById('ttsLang').value = document.getElementById('targetLang').value; textToSpeech(); }
+}
+</script>
+{% endblock %}

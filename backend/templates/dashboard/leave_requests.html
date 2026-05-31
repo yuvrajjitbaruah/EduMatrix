@@ -1,0 +1,111 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}Leave Requests{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div>
+        <h1 class="page-title">Leave Requests</h1>
+        <p class="page-subtitle">
+            {% if user.role == 'student' %}Submit and track your leave applications.
+            {% elif user.role == 'teacher' %}Review student leave requests.
+            {% else %}All leave requests across the institution.{% endif %}
+        </p>
+    </div>
+
+    {% if user.role == 'student' %}
+    <!-- New Leave Request Form -->
+    <div class="card" style="padding: 1.5rem;">
+        <h3 style="font-weight: 700; font-size: 1rem; margin-bottom: 1rem;">New Leave Request</h3>
+        <form method="post" action="{% url 'leave_requests' %}">
+            {% csrf_token %}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label" for="start_date">Start Date</label>
+                    <input type="date" name="start_date" id="start_date" class="form-input" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="end_date">End Date</label>
+                    <input type="date" name="end_date" id="end_date" class="form-input" required />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Target Teachers (Hold Ctrl/Cmd to select multiple)</label>
+                <select name="teachers" multiple required class="form-input" style="height: 8rem; padding: 0.5rem;">
+                    {% for t in all_teachers %}
+                    <option value="{{ t.id }}">{{ t.get_full_name|default:t.username }} ({{ t.department }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="reason">Reason</label>
+                <textarea name="reason" id="reason" class="form-input" rows="3" placeholder="Explain the reason for your leave..." required style="resize: vertical;"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit Request</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- Leave List -->
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        {% if user.role != 'student' %}<th>Student</th>{% endif %}
+                        <th>From</th>
+                        <th>To</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        {% if user.role == 'teacher' %}<th>Action</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for leave in leaves %}
+                    <tr>
+                        {% if user.role != 'student' %}
+                        <td style="font-weight: 600;">
+                            <a href="{% url 'public_profile' leave.student.id %}" style="color: var(--cyan-400); text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;" title="View Profile">
+                                {% if leave.student.profile_picture %}
+                                <img src="{{ leave.student.profile_picture.url }}" alt="dp" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
+                                {% else %}
+                                <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--surface-light); color: var(--text-main); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; border: 1px solid var(--border-subtle);">{{ leave.student.username|make_list|first|upper }}</div>
+                                {% endif %}
+                                <span>{{ leave.student.get_full_name|default:leave.student.username }}</span>
+                            </a>
+                        </td>
+                        {% endif %}
+                        <td>{{ leave.start_date|date:"d M Y" }}</td>
+                        <td>{{ leave.end_date|date:"d M Y" }}</td>
+                        <td style="max-width: 16rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ leave.reason }}">{{ leave.reason }}</td>
+                        <td>
+                            <span class="badge badge-{{ leave.status }}">{{ leave.get_status_display }}</span>
+                        </td>
+                        {% if user.role == 'teacher' and leave.status == 'pending' %}
+                        <td>
+                            <div class="flex items-center gap-2">
+                                <form method="post" style="display:inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="leave_id" value="{{ leave.id }}" />
+                                    <button type="submit" name="action" value="approved" class="btn btn-sm" style="background: rgba(16,185,129,0.12); color: var(--emerald-500); border: 1px solid rgba(16,185,129,0.25);">
+                                        Approve
+                                    </button>
+                                </form>
+                                <form method="post" style="display:inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="leave_id" value="{{ leave.id }}" />
+                                    <button type="submit" name="action" value="rejected" class="btn btn-sm" style="background: rgba(244,63,94,0.12); color: var(--rose-500); border: 1px solid rgba(244,63,94,0.25);">
+                                        Reject
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">No leave requests found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
